@@ -6,7 +6,7 @@ import type {RefObject} from 'react';
 import React, {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import type {GestureResponderEvent} from 'react-native';
 import {View} from 'react-native';
-import {useAnimatedStyle, useSharedValue, withTiming} from 'react-native-reanimated';
+import {cancelAnimation, useAnimatedStyle, useSharedValue, withTiming} from 'react-native-reanimated';
 import {scheduleOnRN} from 'react-native-worklets';
 import AttachmentOfflineIndicator from '@components/AttachmentOfflineIndicator';
 import Hoverable from '@components/Hoverable';
@@ -73,6 +73,10 @@ function BaseVideoPlayer({
     const controlsAnimatedStyle = useAnimatedStyle(() => ({
         opacity: controlsOpacity.get(),
     }));
+
+    const [isSeeking, setIsSeeking] = useState(false);
+    const isSeekingRef = useRef(false);
+    const isEndedRef = useRef(false);
 
     /* eslint-disable no-param-reassign */
     // According to the library docs, the player is configured by mutating the provided instance
@@ -171,13 +175,28 @@ function BaseVideoPlayer({
     }, [isCurrentlyURLSet, isLoading, isEnded, currentTime, duration, playVideo, updateCurrentURLAndReportID, url, reportID, pauseVideo, replayVideo]);
 
     const hideControl = useCallback(() => {
-        if (isEnded) {
+        if (isEndedRef.current || isSeekingRef.current) {
             return;
         }
 
-        controlsOpacity.set(withTiming(0, {duration: 500}, () => scheduleOnRN(setControlStatusState, CONST.VIDEO_PLAYER.CONTROLS_STATUS.HIDE)));
-    }, [controlsOpacity, isEnded]);
+        controlsOpacity.set(
+            withTiming(0, {duration: 500}, (finished) => {
+                if (!finished || isSeekingRef.current || isEndedRef.current) {
+                    return;
+                }
+                scheduleOnRN(setControlStatusState, CONST.VIDEO_PLAYER.CONTROLS_STATUS.HIDE);
+            }),
+        );
+    }, [controlsOpacity]);
     const debouncedHideControl = useMemo(() => debounce(hideControl, 1500), [hideControl]);
+
+    useEffect(() => {
+        isSeekingRef.current = isSeeking;
+    }, [isSeeking]);
+
+    useEffect(() => {
+        isEndedRef.current = isEnded;
+    }, [isEnded]);
 
     useEffect(() => {
         if (canUseTouchScreen) {
@@ -196,7 +215,7 @@ function BaseVideoPlayer({
         if (controlStatusState !== CONST.VIDEO_PLAYER.CONTROLS_STATUS.SHOW) {
             return;
         }
-        if (!isPlaying || isPopoverVisible) {
+        if (!isPlaying || isPopoverVisible || isSeeking) {
             debouncedHideControl.cancel();
             return;
         }
@@ -211,6 +230,14 @@ function BaseVideoPlayer({
         const shouldShowArrows = controlStatusState === CONST.VIDEO_PLAYER.CONTROLS_STATUS.SHOW || controlStatusState === CONST.VIDEO_PLAYER.CONTROLS_STATUS.VOLUME_ONLY;
         onTap(shouldShowArrows);
     }, [controlStatusState, onTap]);
+
+    const restartAutoHide = useCallback(() => {
+        debouncedHideControl.cancel();
+        if (!canUseTouchScreen || !isPlaying || isPopoverVisible || controlStatusState !== CONST.VIDEO_PLAYER.CONTROLS_STATUS.SHOW) {
+            return;
+        }
+        debouncedHideControl();
+    }, [canUseTouchScreen, controlStatusState, debouncedHideControl, isPlaying, isPopoverVisible]);
 
     const stopWheelPropagation = useCallback((ev: WheelEvent) => ev.stopPropagation(), []);
 
@@ -352,7 +379,7 @@ function BaseVideoPlayer({
             videoViewRef.current,
             videoPlayerElementParentRef.current,
             videoPlayerElementRef.current,
-            (isUploading && !isCurrentlyURLSet) || isFullScreenRef.current || !isReadyForDisplayRef.current || hasError,
+            (isUploading && !isCurrentlyURLSet) || isFullScreenRef.current || !isReadyForDisplayRef.current || hasError || isSeeking || isSeekingRef.current,
             {shouldUseSharedVideoElement, url, reportID},
         );
     }, [
@@ -520,7 +547,6 @@ function BaseVideoPlayer({
                             {shouldShowLoadingIndicator && <LoadingIndicator style={[styles.opacity1, styles.bgTransparent]} />}
                             {shouldShowOfflineIndicator && <AttachmentOfflineIndicator isPreview={isPreview} />}
                             {controlStatusState !== CONST.VIDEO_PLAYER.CONTROLS_STATUS.HIDE &&
-                                !shouldShowLoadingIndicator &&
                                 !shouldShowOfflineIndicator &&
                                 !shouldShowErrorIndicator &&
                                 (isPopoverVisible || isHovered || canUseTouchScreen || isEnded) && (
@@ -537,6 +563,18 @@ function BaseVideoPlayer({
                                         controlsStatus={controlStatusState}
                                         showPopoverMenu={showPopoverMenu}
                                         reportID={reportID}
+                                        onSeekStart={() => {
+                                            isSeekingRef.current = true;
+                                            debouncedHideControl.cancel();
+                                            cancelAnimation(controlsOpacity);
+                                            controlsOpacity.set(1);
+                                            setIsSeeking(true);
+                                        }}
+                                        onSeekEnd={() => {
+                                            isSeekingRef.current = false;
+                                            setIsSeeking(false);
+                                            restartAutoHide();
+                                        }}
                                     />
                                 )}
                         </View>

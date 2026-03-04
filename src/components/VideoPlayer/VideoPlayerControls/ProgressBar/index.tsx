@@ -16,13 +16,19 @@ type ProgressBarProps = {
 
     /** Function to seek to a specific position in the video. */
     seekPosition: (newPosition: number) => void;
+
+    /** Callback when user starts dragging the slider. */
+    onSeekStart?: () => void;
+
+    /** Callback when user finishes dragging the slider. */
+    onSeekEnd?: () => void;
 };
 
 function getProgress(currentPosition: number, maxPosition: number): number {
     return Math.min(Math.max((currentPosition / maxPosition) * 100, 0), 100);
 }
 
-function ProgressBar({duration, position, seekPosition}: ProgressBarProps) {
+function ProgressBar({duration, position, seekPosition, onSeekStart, onSeekEnd}: ProgressBarProps) {
     const styles = useThemeStyles();
     const {pauseVideo, playVideo, checkIfVideoIsPlaying} = usePlaybackActionsContext();
     const [sliderWidth, setSliderWidth] = useState(1);
@@ -50,6 +56,7 @@ function ProgressBar({duration, position, seekPosition}: ProgressBarProps) {
         .minDistance(0)
         .activateAfterLongPress(0)
         .onBegin((event) => {
+            onSeekStart?.();
             setIsSliderPressed(true);
             checkIfVideoIsPlaying(onCheckIfVideoIsPlaying);
             pauseVideo();
@@ -59,6 +66,7 @@ function ProgressBar({duration, position, seekPosition}: ProgressBarProps) {
             progressBarInteraction(event);
         })
         .onFinalize(() => {
+            onSeekEnd?.();
             setIsSliderPressed(false);
             if (!wasVideoPlayingOnCheck.get()) {
                 return;
