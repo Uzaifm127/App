@@ -52,10 +52,10 @@ type VideoPlayerControlsProps = {
     reportID: string | undefined;
 
     /** Callback when user starts dragging the progress bar. */
-    onSeekStart?: () => void;
+    onSeekStart?: (shouldResumeAfterSeek: boolean) => void;
 
     /** Callback when user finishes dragging the progress bar. */
-    onSeekEnd?: () => void;
+    onSeekEnd?: (shouldResumeAfterSeek: boolean) => void;
 };
 
 function VideoPlayerControls({

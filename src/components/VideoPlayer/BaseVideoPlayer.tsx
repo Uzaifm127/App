@@ -77,6 +77,8 @@ function BaseVideoPlayer({
     const [isSeeking, setIsSeeking] = useState(false);
     const isSeekingRef = useRef(false);
     const isEndedRef = useRef(false);
+    const shouldResumeAfterSeekRef = useRef(false);
+    const allowSharedAutoPlayRef = useRef(true);
 
     /* eslint-disable no-param-reassign */
     // According to the library docs, the player is configured by mutating the provided instance
@@ -167,10 +169,12 @@ function BaseVideoPlayer({
         }
 
         if (isEnded && currentTime >= duration) {
+            allowSharedAutoPlayRef.current = true;
             replayVideo();
             return;
         }
 
+        allowSharedAutoPlayRef.current = true;
         playVideo();
     }, [isCurrentlyURLSet, isLoading, isEnded, currentTime, duration, playVideo, updateCurrentURLAndReportID, url, reportID, pauseVideo, replayVideo]);
 
@@ -379,7 +383,13 @@ function BaseVideoPlayer({
             videoViewRef.current,
             videoPlayerElementParentRef.current,
             videoPlayerElementRef.current,
-            (isUploading && !isCurrentlyURLSet) || isFullScreenRef.current || !isReadyForDisplayRef.current || hasError || isSeeking || isSeekingRef.current,
+            (isUploading && !isCurrentlyURLSet) ||
+                isFullScreenRef.current ||
+                !isReadyForDisplayRef.current ||
+                hasError ||
+                isSeeking ||
+                isSeekingRef.current ||
+                !allowSharedAutoPlayRef.current,
             {shouldUseSharedVideoElement, url, reportID},
         );
     }, [
@@ -393,6 +403,7 @@ function BaseVideoPlayer({
         isFullScreenRef,
         hasError,
         isCurrentlyURLSet,
+        isSeeking,
         status,
         updatePlayerStatus,
     ]);
@@ -563,16 +574,23 @@ function BaseVideoPlayer({
                                         controlsStatus={controlStatusState}
                                         showPopoverMenu={showPopoverMenu}
                                         reportID={reportID}
-                                        onSeekStart={() => {
+                                        onSeekStart={(shouldResumeAfterSeek) => {
+                                            shouldResumeAfterSeekRef.current = shouldResumeAfterSeek;
+                                            allowSharedAutoPlayRef.current = false;
                                             isSeekingRef.current = true;
                                             debouncedHideControl.cancel();
                                             cancelAnimation(controlsOpacity);
                                             controlsOpacity.set(1);
                                             setIsSeeking(true);
                                         }}
-                                        onSeekEnd={() => {
+                                        onSeekEnd={(shouldResumeAfterSeek) => {
                                             isSeekingRef.current = false;
                                             setIsSeeking(false);
+
+                                            if (shouldResumeAfterSeekRef.current || shouldResumeAfterSeek) {
+                                                allowSharedAutoPlayRef.current = true;
+                                                playVideo();
+                                            }
                                             restartAutoHide();
                                         }}
                                     />
