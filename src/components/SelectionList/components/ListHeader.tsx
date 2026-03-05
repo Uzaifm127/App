@@ -28,6 +28,9 @@ type ListHeaderProps<TItem extends ListItem> = {
     /** Whether to show 'Select all' button */
     shouldShowSelectAllButton: boolean;
 
+    /** Whether to keep showing select-all text when a custom list header is provided */
+    shouldShowSelectAllTextWithCustomListHeader?: boolean;
+
     /** Whether to prevent default focus when selecting rows */
     shouldPreventDefaultFocusOnSelectRow?: boolean;
 };
@@ -39,6 +42,7 @@ function ListHeader<TItem extends ListItem>({
     onSelectAll,
     headerStyle,
     shouldShowSelectAllButton,
+    shouldShowSelectAllTextWithCustomListHeader = false,
     shouldPreventDefaultFocusOnSelectRow,
 }: ListHeaderProps<TItem>) {
     const styles = useThemeStyles();
@@ -72,7 +76,7 @@ function ListHeader<TItem extends ListItem>({
                     disabled={allDisabled}
                 />
 
-                {!customListHeader && (
+                {(!customListHeader || shouldShowSelectAllTextWithCustomListHeader) && (
                     <PressableWithFeedback
                         style={[styles.userSelectNone, styles.flexRow, styles.alignItemsCenter]}
                         onPress={onSelectAll}

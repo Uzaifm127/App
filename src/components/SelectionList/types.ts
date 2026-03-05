@@ -138,6 +138,9 @@ type SelectionListProps<TItem extends ListItem> = Partial<ChildrenProps> &
         /** Custom header content to render instead of the default select all header */
         customListHeader?: React.ReactNode;
 
+        /** Whether to keep showing "Select all" text even when customListHeader is provided */
+        shouldShowSelectAllTextWithCustomListHeader?: boolean;
+
         /** Custom component to render while data is loading */
         customLoadingPlaceholder?: React.JSX.Element;
 

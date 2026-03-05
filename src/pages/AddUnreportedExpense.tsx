@@ -4,6 +4,9 @@ import AddUnreportedExpenseFooter from '@components/AddUnreportedExpenseFooter';
 import EmptyStateComponent from '@components/EmptyStateComponent';
 import HeaderWithBackButton from '@components/HeaderWithBackButton';
 import ScreenWrapper from '@components/ScreenWrapper';
+import DropdownButton from '@components/Search/FilterDropdowns/DropdownButton';
+import type {MultiSelectItem} from '@components/Search/FilterDropdowns/MultiSelectPopup';
+import MultiSelectPopup from '@components/Search/FilterDropdowns/MultiSelectPopup';
 import SelectionList from '@components/SelectionList';
 import type {ListItem, SelectionListHandle} from '@components/SelectionList/types';
 import UnreportedExpensesSkeleton from '@components/Skeletons/UnreportedExpensesSkeleton';
@@ -37,6 +40,9 @@ import getEmptyArray from '@src/types/utils/getEmptyArray';
 import UnreportedExpenseListItem from './UnreportedExpenseListItem';
 
 type AddUnreportedExpensePageType = PlatformStackScreenProps<AddUnreportedExpensesParamList, typeof SCREENS.ADD_UNREPORTED_EXPENSES_ROOT>;
+type ExpenseStatusFilter = typeof CONST.SEARCH.STATUS.EXPENSE.UNREPORTED | typeof CONST.SEARCH.STATUS.EXPENSE.DRAFTS;
+type AddUnreportedExpenseListItemData = ListItem & Partial<Transaction> & {transactionID: string; isEmptyState?: boolean};
+const NO_RESULTS_ITEM_KEY = 'add-existing-expense-no-results';
 
 function AddUnreportedExpense({route}: AddUnreportedExpensePageType) {
     const {translate} = useLocalize();
@@ -45,9 +51,11 @@ function AddUnreportedExpense({route}: AddUnreportedExpensePageType) {
     const [offset, setOffset] = useState(0);
     const {isOffline} = useNetwork();
     const [selectedIds, setSelectedIds] = useState(new Set<string>());
+    const [selectedStatuses, setSelectedStatuses] = useState<ExpenseStatusFilter[]>([]);
     const [searchValue, debouncedSearchValue, setSearchValue] = useDebouncedState('');
     const {reportID, backToReport} = route.params;
     const [report] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT}${reportID}`);
+    const [allReports] = useOnyx(ONYXKEYS.COLLECTION.REPORT);
     const [reportToConfirm] = useOnyx(`${ONYXKEYS.COLLECTION.REPORT}${report?.reportID ?? CONST.REPORT.UNREPORTED_REPORT_ID}`);
     const [reportNextStep] = useOnyx(`${ONYXKEYS.COLLECTION.NEXT_STEP}${reportID}`);
     const policy = usePolicy(report?.policyID);
@@ -58,14 +66,41 @@ function AddUnreportedExpense({route}: AddUnreportedExpensePageType) {
     const {accountID: currentUserAccountID} = useCurrentUserPersonalDetails();
     const shouldShowUnreportedTransactionsSkeletons = isLoadingUnreportedTransactions && hasMoreUnreportedTransactionsResults && !isOffline;
 
-    const getUnreportedTransactions = useCallback(
+    const getExpenseStatus = useCallback(
+        (transaction: Transaction): ExpenseStatusFilter | undefined => {
+            const isUnreported = !transaction?.reportID || transaction.reportID === CONST.REPORT.UNREPORTED_REPORT_ID || transaction.reportID === '';
+            if (isUnreported) {
+                return CONST.SEARCH.STATUS.EXPENSE.UNREPORTED;
+            }
+
+            const expenseReport = allReports?.[`${ONYXKEYS.COLLECTION.REPORT}${transaction.reportID}`];
+            const isDraftReport = expenseReport?.stateNum === CONST.REPORT.STATE_NUM.OPEN && expenseReport?.statusNum === CONST.REPORT.STATUS_NUM.OPEN;
+            if (isDraftReport) {
+                return CONST.SEARCH.STATUS.EXPENSE.DRAFTS;
+            }
+
+            return undefined;
+        },
+        [allReports],
+    );
+
+    const getReportableTransactions = useCallback(
         (transactions: OnyxCollection<Transaction>) => {
             if (!transactions) {
                 return [];
             }
             return Object.values(transactions || {}).filter((item) => {
-                const isUnreported = item?.reportID === CONST.REPORT.UNREPORTED_REPORT_ID || item?.reportID === '';
-                if (!isUnreported) {
+                if (!item) {
+                    return false;
+                }
+
+                // Do not show transactions that already belong to the report from which this flow was opened.
+                if (item.reportID?.toString() === reportID) {
+                    return false;
+                }
+
+                const expenseStatus = getExpenseStatus(item);
+                if (!expenseStatus) {
                     return false;
                 }
 
@@ -100,15 +135,15 @@ function AddUnreportedExpense({route}: AddUnreportedExpensePageType) {
                 return true;
             });
         },
-        [policy, report, cardList, currentUserAccountID],
+        [policy, report, cardList, currentUserAccountID, getExpenseStatus, reportID],
     );
 
     const [transactions = getEmptyArray<Transaction>()] = useOnyx(
         ONYXKEYS.COLLECTION.TRANSACTION,
         {
-            selector: getUnreportedTransactions,
+            selector: getReportableTransactions,
         },
-        [getUnreportedTransactions],
+        [getReportableTransactions],
     );
 
     const fetchMoreUnreportedTransactions = () => {
@@ -124,18 +159,46 @@ function AddUnreportedExpense({route}: AddUnreportedExpensePageType) {
     }, []);
 
     const styles = useThemeStyles();
-    const selectionListRef = useRef<SelectionListHandle<Transaction & ListItem>>(null);
+    const selectionListRef = useRef<SelectionListHandle<AddUnreportedExpenseListItemData>>(null);
+    const statusFilterItems = useMemo<Array<MultiSelectItem<ExpenseStatusFilter>>>(
+        () => [
+            {
+                text: translate('common.unreported'),
+                value: CONST.SEARCH.STATUS.EXPENSE.UNREPORTED,
+            },
+            {
+                text: translate('common.draft'),
+                value: CONST.SEARCH.STATUS.EXPENSE.DRAFTS,
+            },
+        ],
+        [translate],
+    );
+    const selectedStatusFilterItems = useMemo(() => statusFilterItems.filter((item) => selectedStatuses.includes(item.value)), [selectedStatuses, statusFilterItems]);
 
-    const shouldShowTextInput = useMemo(() => {
-        return transactions.length >= CONST.SEARCH_ITEM_LIMIT;
-    }, [transactions.length]);
-
-    const filteredTransactions = useMemo(() => {
-        if (!debouncedSearchValue.trim() || !shouldShowTextInput) {
+    const statusFilteredTransactions = useMemo(() => {
+        if (selectedStatuses.length === 0) {
             return transactions;
         }
 
-        return tokenizedSearch(transactions, debouncedSearchValue, (transaction) => {
+        return transactions.filter((transaction) => {
+            if (!transaction) {
+                return false;
+            }
+            const expenseStatus = getExpenseStatus(transaction);
+            return !!expenseStatus && selectedStatuses.includes(expenseStatus);
+        });
+    }, [getExpenseStatus, selectedStatuses, transactions]);
+
+    const shouldShowTextInput = useMemo(() => {
+        return statusFilteredTransactions.length >= CONST.SEARCH_ITEM_LIMIT;
+    }, [statusFilteredTransactions.length]);
+
+    const filteredTransactions = useMemo(() => {
+        if (!debouncedSearchValue.trim() || !shouldShowTextInput) {
+            return statusFilteredTransactions;
+        }
+
+        return tokenizedSearch(statusFilteredTransactions, debouncedSearchValue, (transaction) => {
             const searchableFields: string[] = [];
 
             const merchant = getMerchant(transaction);
@@ -159,7 +222,7 @@ function AddUnreportedExpense({route}: AddUnreportedExpensePageType) {
 
             return searchableFields;
         });
-    }, [debouncedSearchValue, shouldShowTextInput, transactions]);
+    }, [debouncedSearchValue, shouldShowTextInput, statusFilteredTransactions]);
 
     const unreportedExpenses = useMemo(() => {
         return createUnreportedExpenses(filteredTransactions).map((item) => ({
@@ -167,6 +230,34 @@ function AddUnreportedExpense({route}: AddUnreportedExpensePageType) {
             isSelected: selectedIds.has(item.transactionID),
         }));
     }, [filteredTransactions, selectedIds]);
+
+    const onStatusFilterChange = useCallback((items: Array<MultiSelectItem<ExpenseStatusFilter>>) => {
+        setSelectedStatuses(items.map((item) => item.value));
+    }, []);
+
+    const statusFilterPopover = useCallback(
+        (popoverProps: {closeOverlay: () => void}) => (
+            <MultiSelectPopup<ExpenseStatusFilter>
+                label={translate('common.status')}
+                items={statusFilterItems}
+                value={selectedStatusFilterItems}
+                closeOverlay={popoverProps.closeOverlay}
+                onChange={onStatusFilterChange}
+            />
+        ),
+        [onStatusFilterChange, selectedStatusFilterItems, statusFilterItems, translate],
+    );
+
+    const listHeader = useMemo(
+        () => (
+            <DropdownButton
+                label={translate('common.status')}
+                value={selectedStatusFilterItems.map((item) => item.text)}
+                PopoverComponent={statusFilterPopover}
+            />
+        ),
+        [selectedStatusFilterItems, statusFilterPopover, translate],
+    );
 
     const footerContent = useMemo(
         () => (
@@ -185,11 +276,11 @@ function AddUnreportedExpense({route}: AddUnreportedExpensePageType) {
     );
 
     const headerMessage = useMemo(() => {
-        if (debouncedSearchValue.trim() && unreportedExpenses?.length === 0) {
+        if (debouncedSearchValue.trim() && unreportedExpenses.length === 0) {
             return translate('common.noResultsFound');
         }
         return '';
-    }, [debouncedSearchValue, unreportedExpenses?.length, translate]);
+    }, [debouncedSearchValue, unreportedExpenses.length, translate]);
 
     const textInputOptions = useMemo(
         () => ({
@@ -202,7 +293,10 @@ function AddUnreportedExpense({route}: AddUnreportedExpensePageType) {
     );
 
     const onSelectRow = useCallback(
-        (item: {transactionID: string}) => {
+        (item: {transactionID: string; isEmptyState?: boolean}) => {
+            if (item.isEmptyState) {
+                return;
+            }
             setSelectedIds((prevIds) => {
                 const newIds = new Set(prevIds);
                 if (newIds.has(item.transactionID)) {
@@ -234,6 +328,20 @@ function AddUnreportedExpense({route}: AddUnreportedExpensePageType) {
 
     const hasSearchTerm = debouncedSearchValue.trim().length > 0;
     const isShowingEmptyState = !hasSearchTerm && transactions.length === 0;
+    const shouldShowNoResultsRow = transactions.length > 0 && unreportedExpenses.length === 0;
+    const listData = useMemo<AddUnreportedExpenseListItemData[]>(() => {
+        if (shouldShowNoResultsRow) {
+            return [
+                {
+                    keyForList: NO_RESULTS_ITEM_KEY,
+                    transactionID: NO_RESULTS_ITEM_KEY,
+                    isDisabled: true,
+                    isEmptyState: true,
+                },
+            ];
+        }
+        return unreportedExpenses;
+    }, [shouldShowNoResultsRow, unreportedExpenses]);
 
     if (isShowingEmptyState && isLoadingUnreportedTransactions) {
         return (
@@ -309,14 +417,16 @@ function AddUnreportedExpense({route}: AddUnreportedExpensePageType) {
                 title={translate('iou.addUnreportedExpense')}
                 onBackButtonPress={Navigation.goBack}
             />
-            <SelectionList<Transaction & ListItem>
-                data={unreportedExpenses}
+            <SelectionList<AddUnreportedExpenseListItemData>
+                data={listData}
                 ref={selectionListRef}
                 onSelectRow={onSelectRow}
                 onSelectAll={onSelectAll}
                 style={{listHeaderWrapperStyle: styles.ph8}}
                 textInputOptions={textInputOptions}
                 shouldShowTextInput={shouldShowTextInput}
+                customListHeader={listHeader}
+                shouldShowSelectAllTextWithCustomListHeader
                 canSelectMultiple
                 ListItem={UnreportedExpenseListItem}
                 onEndReached={fetchMoreUnreportedTransactions}

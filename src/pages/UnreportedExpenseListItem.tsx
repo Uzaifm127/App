@@ -4,8 +4,10 @@ import {getButtonRole} from '@components/Button/utils';
 import OfflineWithFeedback from '@components/OfflineWithFeedback';
 import {PressableWithFeedback} from '@components/Pressable';
 import type {ListItem, ListItemProps, TransactionListItemType} from '@components/SelectionListWithSections/types';
+import Text from '@components/Text';
 import TransactionItemRow from '@components/TransactionItemRow';
 import useAnimatedHighlightStyle from '@hooks/useAnimatedHighlightStyle';
+import useLocalize from '@hooks/useLocalize';
 import useStyleUtils from '@hooks/useStyleUtils';
 import useSyncFocus from '@hooks/useSyncFocus';
 import useTheme from '@hooks/useTheme';
@@ -32,6 +34,7 @@ function UnreportedExpenseListItem<TItem extends ListItem>({
     violations,
 }: UnreportedExpenseListItemProps<TItem>) {
     const styles = useThemeStyles();
+    const {translate} = useLocalize();
     const transactionItem = item as unknown as TransactionListItemType;
     const isSelected = !!item.isSelected;
     const theme = useTheme();
@@ -50,6 +53,11 @@ function UnreportedExpenseListItem<TItem extends ListItem>({
     useSyncFocus(pressableRef, !!isFocused, shouldSyncFocus);
 
     const isItemDisabled = (!!isDisabled && !isSelected) || readOnly;
+    const isEmptyState = 'isEmptyState' in item && !!item.isEmptyState;
+
+    if (isEmptyState) {
+        return <Text style={[styles.textNormal, styles.textSupporting, styles.p5, styles.textAlignCenter]}>{translate('common.noResultsFound')}</Text>;
+    }
 
     return (
         <OfflineWithFeedback pendingAction={item.pendingAction}>

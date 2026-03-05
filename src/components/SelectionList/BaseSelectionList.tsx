@@ -52,6 +52,7 @@ function BaseSelectionList<TItem extends ListItem>({
     confirmButtonOptions,
     children,
     customListHeader,
+    shouldShowSelectAllTextWithCustomListHeader = false,
     customListHeaderContent,
     customLoadingPlaceholder,
     footerContent,
@@ -480,6 +481,7 @@ function BaseSelectionList<TItem extends ListItem>({
             onSelectAll={handleSelectAll}
             headerStyle={style?.listHeaderWrapperStyle}
             shouldShowSelectAllButton={!!onSelectAll}
+            shouldShowSelectAllTextWithCustomListHeader={shouldShowSelectAllTextWithCustomListHeader}
             shouldPreventDefaultFocusOnSelectRow={shouldPreventDefaultFocusOnSelectRow}
         />
     );
