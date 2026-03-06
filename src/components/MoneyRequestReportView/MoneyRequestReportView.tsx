@@ -268,6 +268,7 @@ function MoneyRequestReportView({report, policy, reportMetadata, shouldDisplayRe
                                     report={transactionThreadReport}
                                     fillSpace
                                     isDisplayedInWideRHP
+                                    shouldDisablePendingOpacity={!!reportPendingAction}
                                 />
                             </ScrollView>
                         </Animated.View>
