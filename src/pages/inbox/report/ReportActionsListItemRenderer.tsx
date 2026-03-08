@@ -90,6 +90,9 @@ type ReportActionsListItemRendererProps = {
 
     /** Report name value pairs originalID */
     reportNameValuePairsOriginalID?: string;
+
+    /** Whether parent container already applies offline opacity */
+    isParentApplyingOpacity?: boolean;
 };
 
 function ReportActionsListItemRenderer({
@@ -121,6 +124,7 @@ function ReportActionsListItemRenderer({
     isReportArchived = false,
     reportNameValuePairsOrigin,
     reportNameValuePairsOriginalID,
+    isParentApplyingOpacity = false,
 }: ReportActionsListItemRendererProps) {
     const originalMessage = useMemo(() => getOriginalMessage(reportAction), [reportAction]);
 
@@ -249,6 +253,7 @@ function ReportActionsListItemRenderer({
             isTryNewDotNVPDismissed={isTryNewDotNVPDismissed}
             reportNameValuePairsOrigin={reportNameValuePairsOrigin}
             reportNameValuePairsOriginalID={reportNameValuePairsOriginalID}
+            isParentApplyingOpacity={isParentApplyingOpacity}
         />
     );
 }

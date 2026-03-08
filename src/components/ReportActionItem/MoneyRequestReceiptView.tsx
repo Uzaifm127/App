@@ -79,7 +79,7 @@ type MoneyRequestReceiptViewProps = {
     isDisplayedInWideRHP?: boolean;
 
     /** Whether offline pending opacity should be disabled because parent already applies it */
-    shouldDisablePendingOpacity?: boolean;
+    isParentApplyingOpacity?: boolean;
 };
 
 const receiptImageViolationNames = new Set<OnyxTypes.ViolationName>([
@@ -101,7 +101,7 @@ function MoneyRequestReceiptView({
     fillSpace = false,
     mergeTransactionID,
     isDisplayedInWideRHP = false,
-    shouldDisablePendingOpacity = false,
+    isParentApplyingOpacity,
 }: MoneyRequestReceiptViewProps) {
     const styles = useThemeStyles();
     const {translate} = useLocalize();
@@ -172,10 +172,12 @@ function MoneyRequestReceiptView({
         receiptURIs = getThumbnailAndImageURIs(updatedTransaction ?? transaction);
     }
     const pendingAction = transaction?.pendingAction;
-    // Need to return undefined when we have pendingAction to avoid the duplicate pending action
-    const getPendingFieldAction = (fieldPath: TransactionPendingFieldsKey) => (pendingAction ? undefined : transaction?.pendingFields?.[fieldPath]);
-
-    const getReceiptSectionPendingAction = (fieldPath: TransactionPendingFieldsKey) => getPendingFieldAction(fieldPath) ?? pendingAction;
+    const getPendingFieldAction = (fieldPath: TransactionPendingFieldsKey) => {
+        if (isParentApplyingOpacity) {
+            return undefined;
+        }
+        return transaction?.pendingFields?.[fieldPath] ?? transaction?.pendingAction;
+    };
 
     const transactionToCheck = updatedTransaction ?? transaction;
     const doesTransactionHaveReceipt = !!transactionToCheck?.receipt && !isEmptyObject(transactionToCheck?.receipt);
@@ -360,10 +362,7 @@ function MoneyRequestReceiptView({
     return (
         <View style={fillSpace ? styles.flex1 : styles.pRelative}>
             {shouldShowReceiptAudit && (
-                <OfflineWithFeedback
-                    pendingAction={getReceiptSectionPendingAction('receipt')}
-                    shouldDisableOpacity={shouldDisablePendingOpacity}
-                >
+                <OfflineWithFeedback pendingAction={getPendingFieldAction('receipt')}>
                     <ReceiptAudit
                         notes={receiptViolations}
                         shouldShowAuditResult={!!shouldShowAuditMessage}
@@ -372,8 +371,7 @@ function MoneyRequestReceiptView({
             )}
             {shouldShowReceiptEmptyState && (
                 <OfflineWithFeedback
-                    pendingAction={getReceiptSectionPendingAction('receipt')}
-                    shouldDisableOpacity={shouldDisablePendingOpacity}
+                    pendingAction={getPendingFieldAction('receipt')}
                     style={[styles.mt3, isEmptyObject(errors) && styles.mb3, styles.flex1]}
                     contentContainerStyle={styles.flex1}
                 >
@@ -397,8 +395,7 @@ function MoneyRequestReceiptView({
             )}
             {(hasReceipt || !isEmptyObject(errors)) && (
                 <OfflineWithFeedback
-                    pendingAction={isDistanceRequest ? getReceiptSectionPendingAction('waypoints') : getReceiptSectionPendingAction('receipt')}
-                    shouldDisableOpacity={shouldDisablePendingOpacity}
+                    pendingAction={isDistanceRequest ? getPendingFieldAction('waypoints') : getPendingFieldAction('receipt')}
                     errors={errors}
                     errorRowStyles={[styles.mh4, !shouldShowReceiptEmptyState && styles.mt3]}
                     onClose={() => {

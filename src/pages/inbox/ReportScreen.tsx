@@ -1021,6 +1021,7 @@ function ReportScreen({route, navigation, isInSidePanel = false}: ReportScreenPr
                                                     report={transactionThreadReport ?? report}
                                                     fillSpace
                                                     isDisplayedInWideRHP
+                                                    isParentApplyingOpacity={false}
                                                 />
                                             </ScrollView>
                                         </Animated.View>

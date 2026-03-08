@@ -48,6 +48,9 @@ type ReportActionItemContentCreatedProps = {
 
     /** Flag to show, hide the thread divider line */
     shouldHideThreadDividerLine: boolean;
+
+    /** Whether parent container already applies offline opacity */
+    isParentApplyingOpacity?: boolean;
 };
 
 function ReportActionItemContentCreated({
@@ -58,6 +61,7 @@ function ReportActionItemContentCreated({
     transactionID,
     draftMessage,
     shouldHideThreadDividerLine,
+    isParentApplyingOpacity = false,
 }: ReportActionItemContentCreatedProps) {
     const styles = useThemeStyles();
     const {translate} = useLocalize();
@@ -115,7 +119,10 @@ function ReportActionItemContentCreated({
         }
 
         return (
-            <OfflineWithFeedback pendingAction={action?.pendingAction}>
+            <OfflineWithFeedback
+                pendingAction={action?.pendingAction}
+                shouldDisableOpacity={isParentApplyingOpacity}
+            >
                 <ShowContextMenuStateContext.Provider value={disabledStateValue}>
                     <ShowContextMenuActionsContext.Provider value={contextMenuActionsValue}>
                         <View>
@@ -169,7 +176,10 @@ function ReportActionItemContentCreated({
 
     if (isExpenseReport(report) || isIOUReport(report) || isInvoiceReport(report)) {
         return (
-            <OfflineWithFeedback pendingAction={action?.pendingAction}>
+            <OfflineWithFeedback
+                pendingAction={action?.pendingAction}
+                shouldDisableOpacity={isParentApplyingOpacity}
+            >
                 {!isEmptyObject(transactionThreadReport?.reportID) ? (
                     <View style={[styles.pRelative, styles.moneyRequestView]}>
                         <AnimatedEmptyStateBackground />
@@ -224,5 +234,6 @@ export default memo(
         prevProps.parentReportAction === nextProps.parentReportAction &&
         prevProps.transactionID === nextProps.transactionID &&
         prevProps.draftMessage === nextProps.draftMessage &&
-        prevProps.shouldHideThreadDividerLine === nextProps.shouldHideThreadDividerLine,
+        prevProps.shouldHideThreadDividerLine === nextProps.shouldHideThreadDividerLine &&
+        prevProps.isParentApplyingOpacity === nextProps.isParentApplyingOpacity,
 );

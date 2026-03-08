@@ -840,7 +840,6 @@ function MoneyRequestReportActionsList({
                         <MoneyRequestViewReportFields
                             report={report}
                             policy={policy}
-                            pendingAction={reportPendingAction}
                         />
                         <SearchMoneyRequestReportEmptyState
                             report={report}
@@ -867,7 +866,6 @@ function MoneyRequestReportActionsList({
                                 <MoneyRequestViewReportFields
                                     report={report}
                                     policy={policy}
-                                    pendingAction={reportPendingAction}
                                 />
                                 <MoneyRequestReportTransactionList
                                     report={report}

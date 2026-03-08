@@ -268,7 +268,7 @@ function MoneyRequestReportView({report, policy, reportMetadata, shouldDisplayRe
                                     report={transactionThreadReport}
                                     fillSpace
                                     isDisplayedInWideRHP
-                                    shouldDisablePendingOpacity={!!reportPendingAction}
+                                    isParentApplyingOpacity
                                 />
                             </ScrollView>
                         </Animated.View>
@@ -296,6 +296,7 @@ function MoneyRequestReportView({report, policy, reportMetadata, shouldDisplayRe
                                 hasOlderActions={hasOlderActions}
                                 parentReportAction={parentReportAction}
                                 transactionThreadReportID={transactionThreadReportID}
+                                isParentApplyingOpacity
                             />
                         )}
                         {shouldDisplayReportFooter ? (

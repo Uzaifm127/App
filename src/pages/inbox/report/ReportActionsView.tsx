@@ -75,6 +75,9 @@ type ReportActionsViewProps = {
 
     /** Concierge status label */
     conciergeStatusLabel?: string;
+
+    /** Whether parent container already applies offline opacity */
+    isParentApplyingOpacity?: boolean;
 };
 
 let listOldID = Math.round(Math.random() * 100);
@@ -91,6 +94,7 @@ function ReportActionsView({
     isConciergeProcessing,
     conciergeReasoningHistory,
     conciergeStatusLabel,
+    isParentApplyingOpacity = false,
 }: ReportActionsViewProps) {
     useCopySelectionHelper();
     usePendingConciergeResponse(report.reportID);
@@ -368,6 +372,7 @@ function ReportActionsView({
                 isConciergeProcessing={isConciergeProcessing}
                 conciergeReasoningHistory={conciergeReasoningHistory}
                 conciergeStatusLabel={conciergeStatusLabel}
+                isParentApplyingOpacity={isParentApplyingOpacity}
             />
             <UserTypingEventListener report={report} />
         </>

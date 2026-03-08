@@ -480,6 +480,9 @@ type PureReportActionItemProps = {
     /** Report metadata for the report */
     reportMetadata?: OnyxEntry<OnyxTypes.ReportMetadata>;
 
+    /** Whether parent container already applies offline opacity */
+    isParentApplyingOpacity?: boolean;
+
     /** The billing grace end period's shared NVP collection */
     userBillingGraceEndPeriodCollection: OnyxCollection<OnyxTypes.BillingGraceEndPeriod>;
 };
@@ -551,6 +554,7 @@ function PureReportActionItem({
     reportNameValuePairsOrigin,
     reportNameValuePairsOriginalID,
     reportMetadata,
+    isParentApplyingOpacity = false,
     userBillingGraceEndPeriodCollection,
 }: PureReportActionItemProps) {
     const {transitionActionSheetState} = ActionSheetAwareScrollView.useActionSheetAwareScrollViewActions();
@@ -1951,9 +1955,19 @@ function PureReportActionItem({
                 transactionID={transactionID}
                 draftMessage={draftMessage}
                 shouldHideThreadDividerLine={shouldHideThreadDividerLine}
+                isParentApplyingOpacity={isParentApplyingOpacity}
             />
         );
-    }, [contextMenuStateValue, contextMenuActionsValue, parentReportAction, parentReport, draftMessage, shouldHideThreadDividerLine, parentReportActionForTransactionThread]);
+    }, [
+        contextMenuStateValue,
+        contextMenuActionsValue,
+        parentReportAction,
+        parentReport,
+        draftMessage,
+        shouldHideThreadDividerLine,
+        parentReportActionForTransactionThread,
+        isParentApplyingOpacity,
+    ]);
 
     if (action.actionName === CONST.REPORT.ACTIONS.TYPE.CREATED && !isHarvestCreatedExpenseReport) {
         return createdActionContent;
@@ -2102,6 +2116,7 @@ function PureReportActionItem({
                                     pendingAction={
                                         draftMessage !== undefined ? undefined : (action.pendingAction ?? (action.isOptimisticAction ? CONST.RED_BRICK_ROAD_PENDING_ACTION.ADD : undefined))
                                     }
+                                    shouldDisableOpacity={isParentApplyingOpacity}
                                     shouldHideOnDelete={!isDeletedParentAction}
                                     errors={(linkedTransactionRouteError ?? !isOnSearch) ? getLatestErrorMessageField(action as OnyxDataWithErrors) : {}}
                                     errorRowStyles={[styles.ml10, styles.mr2]}
@@ -2207,6 +2222,7 @@ export default memo(PureReportActionItem, (prevProps, nextProps) => {
         deepEqual(prevProps.cardList, nextProps.cardList) &&
         prevProps.reportNameValuePairsOrigin === nextProps.reportNameValuePairsOrigin &&
         prevProps.reportNameValuePairsOriginalID === nextProps.reportNameValuePairsOriginalID &&
+        prevProps.isParentApplyingOpacity === nextProps.isParentApplyingOpacity &&
         prevProps.reportMetadata?.pendingExpenseAction === nextProps.reportMetadata?.pendingExpenseAction
     );
 });

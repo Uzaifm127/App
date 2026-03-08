@@ -130,6 +130,9 @@ type ReportActionsListProps = {
 
     /** Concierge status label */
     conciergeStatusLabel?: string;
+
+    /** Whether parent container already applies offline opacity */
+    isParentApplyingOpacity?: boolean;
 };
 
 // In the component we are subscribing to the arrival of new actions.
@@ -172,6 +175,7 @@ function ReportActionsList({
     isConciergeProcessing = false,
     conciergeReasoningHistory,
     conciergeStatusLabel,
+    isParentApplyingOpacity = false,
 }: ReportActionsListProps) {
     const prevHasCreatedActionAdded = usePrevious(hasCreatedActionAdded);
     const {accountID: currentUserAccountID} = useCurrentUserPersonalDetails();
@@ -726,6 +730,7 @@ function ReportActionsList({
                     isTryNewDotNVPDismissed={isTryNewDotNVPDismissed}
                     reportNameValuePairsOrigin={reportNameValuePairs?.origin}
                     reportNameValuePairsOriginalID={reportNameValuePairs?.originalID}
+                    isParentApplyingOpacity={isParentApplyingOpacity}
                 />
             );
         },
@@ -753,6 +758,7 @@ function ReportActionsList({
             reportNameValuePairs?.origin,
             reportNameValuePairs?.originalID,
             reportActionsFromOnyx,
+            isParentApplyingOpacity,
         ],
     );
 
