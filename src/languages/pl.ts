@@ -5936,6 +5936,14 @@ _Aby uzyskać bardziej szczegółowe instrukcje, [odwiedź naszą stronę pomocy
             addedWithPrimary: 'Niektóre osoby zostały dodane za pomocą swoich głównych loginów.',
             invitedBySecondaryLogin: (secondaryLogin: string) => `Dodane przez dodatkowy login ${secondaryLogin}.`,
             workspaceMembersCount: (count: number) => `Łączna liczba członków przestrzeni roboczej: ${count}`,
+            allMembers: 'Wszyscy członkowie',
+            admins: 'Administratorzy',
+            approvers: 'Zatwierdzający',
+            auditors: 'Audytorzy',
+            emptyRoleFilter: {
+                title: 'Żadni członkowie nie pasują do tego filtra',
+                subtitle: 'Zaproś członka lub zmień powyższy filtr.',
+            },
             importMembers: 'Zaimportuj członków',
             removeMemberPromptApprover: (approver: string, workspaceOwner: string) =>
                 `Jeśli usuniesz ${approver} z tego obszaru roboczego, zastąpimy tę osobę w procesie zatwierdzania przez ${workspaceOwner}, właściciela obszaru roboczego.`,

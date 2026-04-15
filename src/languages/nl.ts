@@ -5944,6 +5944,14 @@ _Voor meer gedetailleerde instructies, [bezoek onze help-site](${CONST.NETSUITE_
             addedWithPrimary: 'Sommige leden zijn toegevoegd met hun primaire login.',
             invitedBySecondaryLogin: (secondaryLogin: string) => `Toegevoegd door secundair login ${secondaryLogin}.`,
             workspaceMembersCount: (count: number) => `Totaal aantal werkruimteleden: ${count}`,
+            allMembers: 'Alle leden',
+            admins: 'Beheerders',
+            approvers: 'Fiatteurs',
+            auditors: 'Auditors',
+            emptyRoleFilter: {
+                title: 'Geen leden komen overeen met dit filter',
+                subtitle: 'Nodig een lid uit of wijzig het filter hierboven.',
+            },
             importMembers: 'Leden importeren',
             removeMemberPromptApprover: (approver: string, workspaceOwner: string) =>
                 `Als je ${approver} uit deze workspace verwijdert, vervangen we diegene in de goedkeuringsworkflow door ${workspaceOwner}, de eigenaar van de workspace.`,

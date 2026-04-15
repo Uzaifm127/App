@@ -5943,6 +5943,14 @@ _Para instruções mais detalhadas, [visite nossa central de ajuda](${CONST.NETS
             addedWithPrimary: 'Alguns membros foram adicionados com seus logins principais.',
             invitedBySecondaryLogin: (secondaryLogin: string) => `Adicionado pelo login secundário ${secondaryLogin}.`,
             workspaceMembersCount: (count: number) => `Total de membros no workspace: ${count}`,
+            allMembers: 'Todos os membros',
+            admins: 'Admins',
+            approvers: 'Aprovadores',
+            auditors: 'Auditores',
+            emptyRoleFilter: {
+                title: 'Nenhum membro corresponde a este filtro',
+                subtitle: 'Convide um membro ou altere o filtro acima.',
+            },
             importMembers: 'Importar membros',
             removeMemberPromptApprover: (approver: string, workspaceOwner: string) =>
                 `Se você remover ${approver} deste workspace, nós o substituiremos no fluxo de aprovação por ${workspaceOwner}, o proprietário do workspace.`,

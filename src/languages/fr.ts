@@ -5993,6 +5993,14 @@ _Pour des instructions plus détaillées, [visitez notre site d’aide](${CONST.
             addedWithPrimary: 'Certains membres ont été ajoutés avec leurs identifiants principaux.',
             invitedBySecondaryLogin: (secondaryLogin: string) => `Ajouté par la connexion secondaire ${secondaryLogin}.`,
             workspaceMembersCount: (count: number) => `Nombre total de membres de l'espace de travail : ${count}`,
+            allMembers: 'Tous les membres',
+            admins: 'Administrateurs',
+            approvers: 'Approbateurs',
+            auditors: 'Auditeurs',
+            emptyRoleFilter: {
+                title: 'Aucun membre ne correspond à ce filtre',
+                subtitle: 'Invitez un membre ou modifiez le filtre ci-dessus.',
+            },
             importMembers: 'Importer des membres',
             removeMemberPromptApprover: (approver: string, workspaceOwner: string) =>
                 `Si vous supprimez ${approver} de cet espace de travail, nous le remplacerons dans le workflow d’approbation par ${workspaceOwner}, le responsable de l’espace de travail.`,

@@ -5896,6 +5896,14 @@ _詳しい手順については、[ヘルプサイトをご覧ください](${CO
             addedWithPrimary: '一部のメンバーは、プライマリーログインで追加されました。',
             invitedBySecondaryLogin: (secondaryLogin: string) => `セカンダリログイン${secondaryLogin}によって追加されました。`,
             workspaceMembersCount: (count: number) => `ワークスペースメンバー合計：${count}`,
+            allMembers: 'すべてのメンバー',
+            admins: '管理者',
+            approvers: '承認者',
+            auditors: '監査担当者',
+            emptyRoleFilter: {
+                title: 'このフィルターに一致するメンバーはいません',
+                subtitle: 'メンバーを招待するか、上のフィルターを変更してください。',
+            },
             importMembers: 'メンバーをインポート',
             removeMemberPromptApprover: (approver: string, workspaceOwner: string) =>
                 `このワークスペースから${approver}を削除すると、承認ワークフロー内ではワークスペースのオーナーである${workspaceOwner}に置き換えられます。`,
