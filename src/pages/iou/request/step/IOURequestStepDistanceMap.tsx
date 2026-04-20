@@ -556,6 +556,7 @@ function IOURequestStepDistanceMap({
                         onDragEnd={updateWaypoints}
                         ref={scrollViewRef}
                         renderItem={renderItem}
+                        dragItemOverflow
                         ListFooterComponent={
                             !isInLandscapeMode ? (
                                 <DistanceRequestFooter

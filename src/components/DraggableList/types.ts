@@ -40,6 +40,9 @@ type DraggableListProps<T> = {
 
     /** Externally controlled focused index. When provided, DraggableList skips its internal keyboard navigation. */
     focusedIndex?: number;
+
+    /** Allow the dragged item to move beyond the visible list bounds on native */
+    dragItemOverflow?: boolean;
 } & DraggableListData<T>;
 
 type SortableItemProps = {
