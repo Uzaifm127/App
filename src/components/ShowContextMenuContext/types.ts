@@ -5,11 +5,11 @@ import type {Report, ReportAction} from '@src/types/onyx';
 type ShowContextMenuStateContextType = {
     anchor: ContextMenuAnchor;
     report: OnyxEntry<Report>;
-    isReportArchived: boolean;
     action: OnyxEntry<ReportAction>;
     transactionThreadReport?: OnyxEntry<Report>;
     isDisabled: boolean;
     shouldDisplayContextMenu?: boolean;
+    originalReportID?: string;
 };
 
 type ShowContextMenuActionsContextType = {

@@ -74,7 +74,7 @@ function useBulkPayOptions({
     const isExpenseReport = isExpenseReportUtil(selectedReportID);
     const isInvoiceReport = isInvoiceReportUtil(selectedReportID);
     const shouldShowPayElsewhereOption = !isInvoiceReport;
-    const canUseBusinessBankAccount = isExpenseReport || (isIOUReport && selectedReportID && !hasRequestFromCurrentAccount(selectedReportID, accountID ?? CONST.DEFAULT_NUMBER_ID));
+    const canUseBusinessBankAccount = isExpenseReport || (isIOUReport && selectedReportID && !hasRequestFromCurrentAccount(iouReport, accountID ?? CONST.DEFAULT_NUMBER_ID));
     const canUsePersonalBankAccount = isIOUReport;
     const isPersonalOnlyOption = canUsePersonalBankAccount && !canUseBusinessBankAccount;
     const shouldShowBusinessBankAccountOptions = isExpenseReport && !isPersonalOnlyOption;
@@ -137,12 +137,13 @@ function useBulkPayOptions({
                     bulkPayButtonOptions.push({
                         text: account.text,
                         description: account.description,
-                        icon: account.icon,
+                        icon: typeof account.icon === 'number' ? icons.Bank : account.icon,
                         iconStyles: account.iconStyles,
-                        iconHeight: account.iconSize,
-                        iconWidth: account.iconSize,
+                        iconWidth: typeof account.icon === 'number' ? undefined : account.iconSize,
+                        iconHeight: typeof account.icon === 'number' ? undefined : account.iconSize,
                         key: CONST.PAYMENT_METHODS.BUSINESS_BANK_ACCOUNT,
                         shouldIgnoreKeyForRendering: true,
+                        shouldIgnoreCompactStyle: true,
                         additionalData: {
                             bankAccountID: account.methodID,
                             paymentMethod: CONST.PAYMENT_METHODS.BUSINESS_BANK_ACCOUNT,

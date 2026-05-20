@@ -99,7 +99,7 @@ type BrickRoadIndicatorIconProps = {
 
 function BrickRoadIndicatorIcon({brickRoadIndicator}: BrickRoadIndicatorIconProps) {
     const theme = useTheme();
-    const icons = useMemoizedLazyExpensifyIcons(['DotIndicator'] as const);
+    const icons = useMemoizedLazyExpensifyIcons(['DotIndicator']);
 
     return brickRoadIndicator ? (
         <Icon
@@ -138,8 +138,8 @@ function WorkspacesListRow({
     const theme = useTheme();
     const isFocused = useIsFocused();
     const isNarrow = layoutWidth === CONST.LAYOUT_WIDTH.NARROW;
-    const icons = useMemoizedLazyExpensifyIcons(['ArrowRight', 'Hourglass'] as const);
-    const illustrations = useMemoizedLazyIllustrations(['Mailbox', 'ShieldYellow']);
+    const icons = useMemoizedLazyExpensifyIcons(['ArrowRight', 'Hourglass']);
+    const illustrations = useMemoizedLazyIllustrations(['Mailbox', 'ShieldYellow', 'EnvelopeReceipt']);
 
     const workspaceTypeIcon = useCallback(
         (type: WorkspacesListRowProps['workspaceType']): IconAsset => {
@@ -148,11 +148,13 @@ function WorkspacesListRow({
                     return illustrations.ShieldYellow;
                 case CONST.POLICY.TYPE.TEAM:
                     return illustrations.Mailbox;
+                case CONST.POLICY.TYPE.SUBMIT:
+                    return illustrations.EnvelopeReceipt;
                 default:
                     return illustrations.Mailbox;
             }
         },
-        [illustrations.Mailbox, illustrations.ShieldYellow],
+        [illustrations.EnvelopeReceipt, illustrations.Mailbox, illustrations.ShieldYellow],
     );
 
     const ownerDetails = ownerAccountID && getPersonalDetailsByIDs({accountIDs: [ownerAccountID], currentUserAccountID: currentUserPersonalDetails.accountID}).at(0);
@@ -266,16 +268,13 @@ function WorkspacesListRow({
                 <PressableWithoutFeedback
                     accessible
                     accessibilityLabel={accessibilityLabel}
-                    role={isWide ? CONST.ROLE.ROW : CONST.ROLE.BUTTON}
+                    role={CONST.ROLE.LINK}
                     onPress={onPress}
                     disabled={disabled}
                     style={[isWide ? styles.flexRow : styles.flexColumn, styles.flex1, isWide && styles.gap5]}
                     sentryLabel={CONST.SENTRY_LABEL.WORKSPACE.LIST.ROW}
                 >
-                    <View
-                        role={isWide ? CONST.ROLE.CELL : undefined}
-                        style={[styles.flexRow, styles.justifyContentBetween, styles.flex2, isNarrow && styles.mb3, styles.alignItemsCenter]}
-                    >
+                    <View style={[styles.flexRow, styles.justifyContentBetween, styles.flex2, isNarrow && styles.mb3, styles.alignItemsCenter]}>
                         <View style={[styles.flexRow, styles.gap3, styles.flex1, styles.alignItemsCenter]}>
                             <Avatar
                                 imageStyles={[styles.alignSelfCenter]}
@@ -294,10 +293,7 @@ function WorkspacesListRow({
                         </View>
                         {isNarrow && NarrowBadges}
                     </View>
-                    <View
-                        role={isWide ? CONST.ROLE.CELL : undefined}
-                        style={[styles.flexRow, isWide && styles.flex1, isWide && styles.workspaceOwnerSectionMinWidth, styles.gap2, styles.alignItemsCenter]}
-                    >
+                    <View style={[styles.flexRow, isWide && styles.flex1, isWide && styles.workspaceOwnerSectionMinWidth, styles.gap2, styles.alignItemsCenter]}>
                         {!!ownerDetails && (
                             <>
                                 <Avatar
@@ -322,10 +318,7 @@ function WorkspacesListRow({
                             </>
                         )}
                     </View>
-                    <View
-                        role={isWide ? CONST.ROLE.CELL : undefined}
-                        style={[styles.flexRow, isWide && styles.flex1, styles.gap2, styles.alignItemsCenter]}
-                    >
+                    <View style={[styles.flexRow, isWide && styles.flex1, styles.gap2, styles.alignItemsCenter]}>
                         <Icon
                             src={workspaceTypeIcon(workspaceType)}
                             width={variables.workspaceTypeIconWidth}
@@ -367,7 +360,8 @@ function WorkspacesListRow({
                                 fill={theme.icon}
                                 additionalStyles={[styles.alignSelfCenter, !isHovered && styles.opacitySemiTransparent]}
                                 isButtonIcon
-                                medium
+                                width={variables.iconSizeNormal}
+                                height={variables.iconSizeNormal}
                             />
                         </PressableWithoutFeedback>
                     )}
