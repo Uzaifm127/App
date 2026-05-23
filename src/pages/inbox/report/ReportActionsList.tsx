@@ -850,24 +850,26 @@ function ReportActionsList({
     const hasInitialScrollAction = !!initialScrollKey && renderedVisibleReportActions.some((action) => action.reportActionID === initialScrollKey);
     const shouldUseInitialLoadFallback = isWaitingForInitialLoad && sortedVisibleReportActions.length <= 1 && !hasInitialScrollAction;
     const shouldShowSkeleton = isWaitingForInitialLoad || isOfflineWithIncompleteData;
-    const reportActionsToRender = useMemo(
-        () => (shouldUseInitialLoadFallback && lastAction ? [lastAction] : renderedVisibleReportActions),
-        [lastAction, renderedVisibleReportActions, shouldUseInitialLoadFallback],
-    );
-    const skeletonPlaceholderCount = Math.max(1, Math.ceil(windowHeight / CONST.CHAT_SKELETON_VIEW.AVERAGE_ROW_HEIGHT) - reportActionsToRender.length);
+    const reportActionsToRender = useMemo(() => {
+        const reportActions = shouldUseInitialLoadFallback && lastAction ? [lastAction] : renderedVisibleReportActions;
 
+        if (!isWaitingForInitialLoad) {
+            return reportActions;
+        }
+
+        return reportActions.filter((action) => action.actionName !== CONST.REPORT.ACTIONS.TYPE.CREATED);
+    }, [isWaitingForInitialLoad, lastAction, renderedVisibleReportActions, shouldUseInitialLoadFallback]);
     const listFooterComponent = useMemo(() => {
         if (!shouldShowSkeleton) {
             return;
         }
 
         return (
-            <ReportActionsSkeletonView
-                shouldAnimate={false}
-                possibleVisibleContentItems={skeletonPlaceholderCount}
-            />
+            <View style={styles.appBG}>
+                <ReportActionsSkeletonView shouldAnimate={false} />
+            </View>
         );
-    }, [shouldShowSkeleton, skeletonPlaceholderCount]);
+    }, [shouldShowSkeleton, styles.appBG]);
 
     const handleStartReached = useCallback(() => {
         if (!isSearchTopmostFullScreenRoute()) {
