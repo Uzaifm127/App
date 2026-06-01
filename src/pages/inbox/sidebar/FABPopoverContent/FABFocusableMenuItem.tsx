@@ -8,10 +8,11 @@ type FABFocusableMenuItemProps = Omit<MenuItemProps, 'focused' | 'onFocus' | 'wr
     itemId: string;
     isVisible?: boolean;
     onPress?: () => void;
+    shouldAvoidSafariException?: boolean;
     shouldCallAfterModalHide?: boolean;
 };
 
-function FABFocusableMenuItem({itemId, isVisible = true, onPress, shouldCallAfterModalHide, ...props}: FABFocusableMenuItemProps) {
+function FABFocusableMenuItem({itemId, isVisible = true, onPress, shouldAvoidSafariException, shouldCallAfterModalHide, ...props}: FABFocusableMenuItemProps) {
     const {itemIndex, isFocused, wrapperStyle, setFocusedIndex, onItemPress} = useFABMenuItem(itemId, isVisible);
 
     if (!isVisible) {
@@ -28,7 +29,7 @@ function FABFocusableMenuItem({itemId, isVisible = true, onPress, shouldCallAfte
             wrapperStyle={wrapperStyle}
             shouldCheckActionAllowedOnPress={false}
             role={CONST.ROLE.BUTTON}
-            onPress={onPress ? () => onItemPress(onPress, {shouldCallAfterModalHide}) : undefined}
+            onPress={onPress ? () => onItemPress(onPress, {shouldAvoidSafariException, shouldCallAfterModalHide}) : undefined}
         />
     );
 }

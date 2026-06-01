@@ -9,7 +9,7 @@ type FABMenuItemResult = {
     isFocused: boolean;
     wrapperStyle: ViewStyle;
     setFocusedIndex: (index: number) => void;
-    onItemPress: (onSelected: () => void, options?: {shouldCallAfterModalHide?: boolean}) => void;
+    onItemPress: (onSelected: () => void, options?: {shouldAvoidSafariException?: boolean; shouldCallAfterModalHide?: boolean}) => void;
 };
 
 /**

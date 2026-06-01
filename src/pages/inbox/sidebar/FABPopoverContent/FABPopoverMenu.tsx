@@ -80,9 +80,9 @@ function FABPopoverMenu({isVisible, onClose, onItemSelected, anchorRef, animatio
         onClose();
     };
 
-    const onItemPress = (onSelected: () => void, options?: {shouldCallAfterModalHide?: boolean}) => {
+    const onItemPress = (onSelected: () => void, options?: {shouldAvoidSafariException?: boolean; shouldCallAfterModalHide?: boolean}) => {
         onItemSelected();
-        if (options?.shouldCallAfterModalHide && !isSafari()) {
+        if (options?.shouldCallAfterModalHide && (!isSafari() || options.shouldAvoidSafariException)) {
             close(() => {
                 navigateAfterInteraction(onSelected);
             });

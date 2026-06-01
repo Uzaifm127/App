@@ -124,7 +124,11 @@ function BaseModal({
                 }
             }
             if (callHideCallback) {
-                onModalHide();
+                Promise.resolve(onModalHide()).then(() => {
+                    onModalDidClose();
+                    ComposerFocusManager.refocusAfterModalFullyClosed(uniqueModalId, restoreFocusType);
+                });
+                return;
             }
             onModalDidClose();
             ComposerFocusManager.refocusAfterModalFullyClosed(uniqueModalId, restoreFocusType);

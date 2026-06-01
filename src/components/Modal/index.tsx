@@ -62,21 +62,21 @@ function Modal({fullscreen = true, onModalHide = () => {}, type, onModalShow = (
 
     const hideModal = () => {
         window.removeEventListener('popstate', handlePopState);
-        if ((window.history.state as WindowState)?.shouldGoBack && shouldHandleNavigationBack) {
+        if (!((window.history.state as WindowState)?.shouldGoBack && shouldHandleNavigationBack)) {
             onModalHide();
-            // Defer history.back() so it runs after any pending navigation
-            // callbacks (from onModalDidClose) have pushed their history entries.
-            // This prevents the popstate from undoing navigations triggered by
-            // menu item selection callbacks.
-            setTimeout(() => {
-                if (!(window.history.state as WindowState)?.shouldGoBack) {
-                    return;
-                }
-                withInternalPopstate(() => window.history.back());
-            }, 0);
-        } else {
-            onModalHide();
+            return Promise.resolve();
         }
+
+        return new Promise<void>((resolve) => {
+            const handleHistoryGuardPopState = () => {
+                window.removeEventListener('popstate', handleHistoryGuardPopState);
+                onModalHide();
+                resolve();
+            };
+
+            window.addEventListener('popstate', handleHistoryGuardPopState, {once: true});
+            withInternalPopstate(() => window.history.back());
+        });
     };
 
     const showModal = () => {
