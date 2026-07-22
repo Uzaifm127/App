@@ -12,28 +12,19 @@ index e096e44..3270a4c 100644
       * Checks matched Emails for validity and replace valid links with html elements
       */
 diff --git a/node_modules/expensify-common/dist/ExpensiMark.js b/node_modules/expensify-common/dist/ExpensiMark.js
-index a9e6b04..4e509e9 100644
+index a9e6b04..555ae81 100644
 --- a/node_modules/expensify-common/dist/ExpensiMark.js
 +++ b/node_modules/expensify-common/dist/ExpensiMark.js
-@@ -40,12 +40,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
- const str_1 = __importDefault(require("./str"));
- const Constants = __importStar(require("./CONST"));
- const UrlPatterns = __importStar(require("./Url"));
-+const tlds_1 = __importDefault(require("./tlds"));
- const Logger_1 = __importDefault(require("./Logger"));
- const Utils = __importStar(require("./utils"));
- const EXTRAS_DEFAULT = {};
-+const VALID_TLDS = new Set(tlds_1.default.split('|'));
+@@ -46,6 +46,8 @@ const EXTRAS_DEFAULT = {};
  const MARKDOWN_LINK_REGEX = new RegExp(`\\[((?:[^\\[\\]\\r\\n]*(?:\\[[^\\[\\]\\r\\n]*][^\\[\\]\\r\\n]*)*))]\\(${UrlPatterns.MARKDOWN_URL_REGEX}\\)(?![^<]*(<\\/pre>|<\\/code>))`, 'gi');
  const MARKDOWN_IMAGE_REGEX = new RegExp(`\\!(?:\\[([^\\][]*(?:\\[[^\\][]*][^\\][]*)*)])?\\(${UrlPatterns.MARKDOWN_URL_REGEX}\\)(?![^<]*(<\\/pre>|<\\/code>))`, 'gi');
  const MARKDOWN_VIDEO_REGEX = new RegExp(`\\!(?:\\[([^\\][]*(?:\\[[^\\][]*][^\\][]*)*)])?\\(((${UrlPatterns.MARKDOWN_URL_REGEX})\\.(?:${Constants.CONST.VIDEO_EXTENSIONS.join('|')}))\\)(?![^<]*(<\\/pre>|<\\/code>))`, 'gi');
-+const AUTOLINK_REGEX = new RegExp(`(?![^<]*>|[^<>]*<\\/(?!h1>))([_*~]*?)${UrlPatterns.MARKDOWN_URL_REGEX}\\1(?!((?:(?!<a).)+)?<\\/a>|[^<]*(<\\/pre>|<\\/code>))`, 'gi');
 +const BOLD_MARKDOWN_REGEX = /(?<!<[^>]*)(\b_|\B)\*(?!(?:<\/em))(?![^<]*(?:<\/pre>|<\/code>|<\/a>|<\/video>))((?![\s*])[\s\S]*?[^\s*](?<!\s))\*\B(?![^<]*>)(?![^<]*(<\/pre>|<\/code>|<\/a>|<\/video>))/g;
 +const STRIKETHROUGH_MARKDOWN_REGEX = /(?<!<[^>]*)\B~((?![\s~])[\s\S]*?[^\s~](?<!\s))~\B(?![^<]*>)(?![^<]*(<\/pre>|<\/code>|<\/a>|<\/video>))/g;
  const SLACK_SPAN_NEW_LINE_TAG = '<span class="c-mrkdwn__br" data-stringify-type="paragraph-break" style="box-sizing: inherit; display: block; height: unset;"></span>';
  // Preserve VirtualCFO chart blocks by matching the outer <VictoryChart> container.
  // This captures all nested Victory components and prevents markup escaping during conversion.
-@@ -85,6 +90,206 @@ function replaceTextWithExtras(text, regexp, extras, replacement) {
+@@ -85,6 +87,188 @@ function replaceTextWithExtras(text, regexp, extras, replacement) {
      }
      return text.replace(regexp, replacement);
  }
@@ -44,7 +35,6 @@ index a9e6b04..4e509e9 100644
 +    const starPositions = [];
 +    const protectedTags = [];
 +    const blockedTagNames = new Set(['a', 'code', 'pre', 'video']);
-+    let section = 0;
 +    let index = 0;
 +    while (index < text.length) {
 +        if (text[index] === '<') {
@@ -60,14 +50,8 @@ index a9e6b04..4e509e9 100644
 +                    const matchingTagIndex = protectedTags.lastIndexOf(tagName);
 +                    if (matchingTagIndex !== -1) {
 +                        protectedTags.splice(matchingTagIndex, 1);
-+                        if (protectedTags.length === 0) {
-+                            section++;
-+                        }
 +                    }
 +                } else if (!tag.endsWith('/')) {
-+                    if (protectedTags.length === 0) {
-+                        section++;
-+                    }
 +                    protectedTags.push(tagName);
 +                }
 +            }
@@ -75,7 +59,7 @@ index a9e6b04..4e509e9 100644
 +            continue;
 +        }
 +        if (text[index] === '*' && protectedTags.length === 0) {
-+            starPositions.push({index, section});
++            starPositions.push(index);
 +        }
 +        index++;
 +    }
@@ -107,20 +91,18 @@ index a9e6b04..4e509e9 100644
 +    const output = [];
 +    let outputStart = 0;
 +    let openingPosition;
-+    let openingSection;
-+    for (const star of starPositions) {
-+        if (openingPosition === undefined || openingSection !== star.section) {
-+            openingPosition = canOpen(star.index) ? star.index : undefined;
-+            openingSection = star.section;
++    for (const starPosition of starPositions) {
++        if (openingPosition === undefined) {
++            openingPosition = canOpen(starPosition) ? starPosition : undefined;
 +            continue;
 +        }
-+        if (!canClose(star.index)) {
++        if (!canClose(starPosition)) {
 +            continue;
 +        }
 +        const prefixLength = openingPosition > 0 ? 1 : 0;
-+        const suffixLength = star.index + 1 < text.length ? 1 : 0;
++        const suffixLength = starPosition + 1 < text.length ? 1 : 0;
 +        const candidateStart = openingPosition - prefixLength;
-+        const candidateEnd = star.index + 1 + suffixLength;
++        const candidateEnd = starPosition + 1 + suffixLength;
 +        const candidate = text.slice(candidateStart, candidateEnd);
 +        regexp.lastIndex = 0;
 +        const replacedCandidate = replaceTextWithExtras(candidate, regexp, EXTRAS_DEFAULT, replacement);
@@ -128,11 +110,11 @@ index a9e6b04..4e509e9 100644
 +            const replacedCoreEnd = suffixLength ? replacedCandidate.length - suffixLength : replacedCandidate.length;
 +            output.push(text.slice(outputStart, openingPosition));
 +            output.push(replacedCandidate.slice(prefixLength, replacedCoreEnd));
-+            outputStart = star.index + 1;
++            outputStart = starPosition + 1;
 +            openingPosition = undefined;
 +            continue;
 +        }
-+        openingPosition = canOpen(star.index) ? star.index : undefined;
++        openingPosition = canOpen(starPosition) ? starPosition : undefined;
 +    }
 +    if (output.length === 0) {
 +        return text;
@@ -147,7 +129,6 @@ index a9e6b04..4e509e9 100644
 +    const tildePositions = [];
 +    const protectedTags = [];
 +    const blockedTagNames = new Set(['a', 'code', 'pre', 'video']);
-+    let section = 0;
 +    let index = 0;
 +    while (index < text.length) {
 +        if (text[index] === '<') {
@@ -163,15 +144,9 @@ index a9e6b04..4e509e9 100644
 +                    const matchingTagIndex = protectedTags.lastIndexOf(tagName);
 +                    if (matchingTagIndex !== -1) {
 +                        protectedTags.splice(matchingTagIndex, 1);
-+                        if (protectedTags.length === 0) {
-+                            section++;
-+                        }
 +                    }
 +                }
 +                else if (!tag.endsWith('/')) {
-+                    if (protectedTags.length === 0) {
-+                        section++;
-+                    }
 +                    protectedTags.push(tagName);
 +                }
 +            }
@@ -179,7 +154,7 @@ index a9e6b04..4e509e9 100644
 +            continue;
 +        }
 +        if (text[index] === '~' && protectedTags.length === 0) {
-+            tildePositions.push({ index, section });
++            tildePositions.push(index);
 +        }
 +        index++;
 +    }
@@ -204,20 +179,18 @@ index a9e6b04..4e509e9 100644
 +    const output = [];
 +    let outputStart = 0;
 +    let openingPosition;
-+    let openingSection;
-+    for (const tilde of tildePositions) {
-+        if (openingPosition === undefined || openingSection !== tilde.section) {
-+            openingPosition = canOpen(tilde.index) ? tilde.index : undefined;
-+            openingSection = tilde.section;
++    for (const tildePosition of tildePositions) {
++        if (openingPosition === undefined) {
++            openingPosition = canOpen(tildePosition) ? tildePosition : undefined;
 +            continue;
 +        }
-+        if (!canClose(tilde.index)) {
++        if (!canClose(tildePosition)) {
 +            continue;
 +        }
 +        const prefixLength = openingPosition > 0 ? 1 : 0;
-+        const suffixLength = tilde.index + 1 < text.length ? 1 : 0;
++        const suffixLength = tildePosition + 1 < text.length ? 1 : 0;
 +        const candidateStart = openingPosition - prefixLength;
-+        const candidateEnd = tilde.index + 1 + suffixLength;
++        const candidateEnd = tildePosition + 1 + suffixLength;
 +        const candidate = text.slice(candidateStart, candidateEnd);
 +        regexp.lastIndex = 0;
 +        const replacedCandidate = replaceTextWithExtras(candidate, regexp, EXTRAS_DEFAULT, replacement);
@@ -225,11 +198,11 @@ index a9e6b04..4e509e9 100644
 +            const replacedCoreEnd = suffixLength ? replacedCandidate.length - suffixLength : replacedCandidate.length;
 +            output.push(text.slice(outputStart, openingPosition));
 +            output.push(replacedCandidate.slice(prefixLength, replacedCoreEnd));
-+            outputStart = tilde.index + 1;
++            outputStart = tildePosition + 1;
 +            openingPosition = undefined;
 +            continue;
 +        }
-+        openingPosition = canOpen(tilde.index) ? tilde.index : undefined;
++        openingPosition = canOpen(tildePosition) ? tildePosition : undefined;
 +    }
 +    if (output.length === 0) {
 +        return text;
@@ -240,18 +213,16 @@ index a9e6b04..4e509e9 100644
  /**
   * replace block element with '\n' if :
   * 1. We have text within the element.
-@@ -546,8 +751,8 @@ class ExpensiMark {
-             {
+@@ -547,7 +731,7 @@ class ExpensiMark {
                  name: 'autolink',
                  process: (textToProcess, replacement) => {
--                    const regex = new RegExp(`(?![^<]*>|[^<>]*<\\/(?!h1>))([_*~]*?)${UrlPatterns.MARKDOWN_URL_REGEX}\\1(?!((?:(?!<a).)+)?<\\/a>|[^<]*(<\\/pre>|<\\/code>))`, 'gi');
+                     const regex = new RegExp(`(?![^<]*>|[^<>]*<\\/(?!h1>))([_*~]*?)${UrlPatterns.MARKDOWN_URL_REGEX}\\1(?!((?:(?!<a).)+)?<\\/a>|[^<]*(<\\/pre>|<\\/code>))`, 'gi');
 -                    return this.modifyTextForUrlLinks(regex, textToProcess, replacement);
-+                    AUTOLINK_REGEX.lastIndex = 0;
-+                    return this.modifyTextForUrlLinks(AUTOLINK_REGEX, textToProcess, replacement, true);
++                    return this.modifyTextForUrlLinks(regex, textToProcess, replacement, true);
                  },
                  replacement: (_extras, _match, g1, g2) => {
                      const href = str_1.default.sanitizeURL(g2);
-@@ -653,7 +858,8 @@ class ExpensiMark {
+@@ -653,7 +837,8 @@ class ExpensiMark {
                  // \B will match everything that \b doesn't, so it works
                  // for * and ~: https://www.rexegg.com/regex-boundaries.html#notb
                  name: 'bold',
@@ -261,7 +232,7 @@ index a9e6b04..4e509e9 100644
                  replacement: (_extras, match, g1, g2) => {
                      if (g1.includes('_')) {
                          return `${g1}<strong>${g2}</strong>`;
-@@ -663,7 +869,8 @@ class ExpensiMark {
+@@ -663,7 +848,8 @@ class ExpensiMark {
              },
              {
                  name: 'strikethrough',
@@ -271,7 +242,7 @@ index a9e6b04..4e509e9 100644
                  replacement: (_extras, match, g1) => (g1.includes('</pre>') || containsNonPairTag(g1) ? match : `<del>${g1}</del>`),
              },
              {
-@@ -1111,7 +1318,124 @@ class ExpensiMark {
+@@ -1111,7 +1297,100 @@ class ExpensiMark {
      /**
       * Checks matched URLs for validity and replace valid links with html elements
       */
@@ -337,38 +308,14 @@ index a9e6b04..4e509e9 100644
 +                }
 +                let candidateStart = hostnameStart;
 +                const protocol = textToCheck.slice(Math.max(0, hostnameStart - 8), hostnameStart).toLowerCase();
-+                let hasProtocol = false;
 +                if (protocol.endsWith('https://')) {
 +                    candidateStart = hostnameStart - 8;
-+                    hasProtocol = true;
 +                }
 +                else if (protocol.endsWith('http://')) {
 +                    candidateStart = hostnameStart - 7;
-+                    hasProtocol = true;
 +                }
 +                else if (protocol.endsWith('ftp://')) {
 +                    candidateStart = hostnameStart - 6;
-+                    hasProtocol = true;
-+                }
-+                const tld = textToCheck.slice(index + 1, tldEnd).toUpperCase();
-+                if (!hasProtocol && !VALID_TLDS.has(tld)) {
-+                    index++;
-+                    continue;
-+                }
-+                let labelStart = hostnameStart;
-+                let isValidHostname = tldEnd - hostnameStart <= 253;
-+                for (let hostnameIndex = hostnameStart; isValidHostname && hostnameIndex <= tldEnd; hostnameIndex++) {
-+                    if (hostnameIndex !== tldEnd && textToCheck[hostnameIndex] !== '.') {
-+                        continue;
-+                    }
-+                    const labelLength = hostnameIndex - labelStart;
-+                    isValidHostname = labelLength > 0 && labelLength <= 63 && textToCheck[labelStart] !== '-' && textToCheck[hostnameIndex - 1] !== '-';
-+                    labelStart = hostnameIndex + 1;
-+                }
-+                if (!isValidHostname) {
-+                    hostnameRunStart = index + 1;
-+                    index++;
-+                    continue;
 +                }
 +                if (candidateStart > 0 && textToCheck[candidateStart - 1] === '@') {
 +                    candidateStart--;
@@ -411,28 +358,19 @@ index e096e44..3270a4c 100644
       * Checks matched Emails for validity and replace valid links with html elements
       */
 diff --git a/node_modules/expensify-common/dist/esm/ExpensiMark.js b/node_modules/expensify-common/dist/esm/ExpensiMark.js
-index a193f56..062c116 100644
+index a193f56..0f98b5d 100644
 --- a/node_modules/expensify-common/dist/esm/ExpensiMark.js
 +++ b/node_modules/expensify-common/dist/esm/ExpensiMark.js
-@@ -2,12 +2,17 @@
- import Str from './str';
- import * as Constants from './CONST';
- import * as UrlPatterns from './Url';
-+import TLD_REGEX from './tlds';
- import Logger from './Logger';
- import * as Utils from './utils';
- const EXTRAS_DEFAULT = {};
-+const VALID_TLDS = new Set(TLD_REGEX.split('|'));
+@@ -8,6 +8,8 @@ const EXTRAS_DEFAULT = {};
  const MARKDOWN_LINK_REGEX = new RegExp(`\\[((?:[^\\[\\]\\r\\n]*(?:\\[[^\\[\\]\\r\\n]*][^\\[\\]\\r\\n]*)*))]\\(${UrlPatterns.MARKDOWN_URL_REGEX}\\)(?![^<]*(<\\/pre>|<\\/code>))`, 'gi');
  const MARKDOWN_IMAGE_REGEX = new RegExp(`\\!(?:\\[([^\\][]*(?:\\[[^\\][]*][^\\][]*)*)])?\\(${UrlPatterns.MARKDOWN_URL_REGEX}\\)(?![^<]*(<\\/pre>|<\\/code>))`, 'gi');
  const MARKDOWN_VIDEO_REGEX = new RegExp(`\\!(?:\\[([^\\][]*(?:\\[[^\\][]*][^\\][]*)*)])?\\(((${UrlPatterns.MARKDOWN_URL_REGEX})\\.(?:${Constants.CONST.VIDEO_EXTENSIONS.join('|')}))\\)(?![^<]*(<\\/pre>|<\\/code>))`, 'gi');
-+const AUTOLINK_REGEX = new RegExp(`(?![^<]*>|[^<>]*<\\/(?!h1>))([_*~]*?)${UrlPatterns.MARKDOWN_URL_REGEX}\\1(?!((?:(?!<a).)+)?<\\/a>|[^<]*(<\\/pre>|<\\/code>))`, 'gi');
 +const BOLD_MARKDOWN_REGEX = /(?<!<[^>]*)(\b_|\B)\*(?!(?:<\/em))(?![^<]*(?:<\/pre>|<\/code>|<\/a>|<\/video>))((?![\s*])[\s\S]*?[^\s*](?<!\s))\*\B(?![^<]*>)(?![^<]*(<\/pre>|<\/code>|<\/a>|<\/video>))/g;
 +const STRIKETHROUGH_MARKDOWN_REGEX = /(?<!<[^>]*)\B~((?![\s~])[\s\S]*?[^\s~](?<!\s))~\B(?![^<]*>)(?![^<]*(<\/pre>|<\/code>|<\/a>|<\/video>))/g;
  const SLACK_SPAN_NEW_LINE_TAG = '<span class="c-mrkdwn__br" data-stringify-type="paragraph-break" style="box-sizing: inherit; display: block; height: unset;"></span>';
  // Preserve VirtualCFO chart blocks by matching the outer <VictoryChart> container.
  // This captures all nested Victory components and prevents markup escaping during conversion.
-@@ -47,6 +52,206 @@ function replaceTextWithExtras(text, regexp, extras, replacement) {
+@@ -47,6 +49,188 @@ function replaceTextWithExtras(text, regexp, extras, replacement) {
      }
      return text.replace(regexp, replacement);
  }
@@ -443,7 +381,6 @@ index a193f56..062c116 100644
 +    const starPositions = [];
 +    const protectedTags = [];
 +    const blockedTagNames = new Set(['a', 'code', 'pre', 'video']);
-+    let section = 0;
 +    let index = 0;
 +    while (index < text.length) {
 +        if (text[index] === '<') {
@@ -459,14 +396,8 @@ index a193f56..062c116 100644
 +                    const matchingTagIndex = protectedTags.lastIndexOf(tagName);
 +                    if (matchingTagIndex !== -1) {
 +                        protectedTags.splice(matchingTagIndex, 1);
-+                        if (protectedTags.length === 0) {
-+                            section++;
-+                        }
 +                    }
 +                } else if (!tag.endsWith('/')) {
-+                    if (protectedTags.length === 0) {
-+                        section++;
-+                    }
 +                    protectedTags.push(tagName);
 +                }
 +            }
@@ -474,7 +405,7 @@ index a193f56..062c116 100644
 +            continue;
 +        }
 +        if (text[index] === '*' && protectedTags.length === 0) {
-+            starPositions.push({index, section});
++            starPositions.push(index);
 +        }
 +        index++;
 +    }
@@ -506,20 +437,18 @@ index a193f56..062c116 100644
 +    const output = [];
 +    let outputStart = 0;
 +    let openingPosition;
-+    let openingSection;
-+    for (const star of starPositions) {
-+        if (openingPosition === undefined || openingSection !== star.section) {
-+            openingPosition = canOpen(star.index) ? star.index : undefined;
-+            openingSection = star.section;
++    for (const starPosition of starPositions) {
++        if (openingPosition === undefined) {
++            openingPosition = canOpen(starPosition) ? starPosition : undefined;
 +            continue;
 +        }
-+        if (!canClose(star.index)) {
++        if (!canClose(starPosition)) {
 +            continue;
 +        }
 +        const prefixLength = openingPosition > 0 ? 1 : 0;
-+        const suffixLength = star.index + 1 < text.length ? 1 : 0;
++        const suffixLength = starPosition + 1 < text.length ? 1 : 0;
 +        const candidateStart = openingPosition - prefixLength;
-+        const candidateEnd = star.index + 1 + suffixLength;
++        const candidateEnd = starPosition + 1 + suffixLength;
 +        const candidate = text.slice(candidateStart, candidateEnd);
 +        regexp.lastIndex = 0;
 +        const replacedCandidate = replaceTextWithExtras(candidate, regexp, EXTRAS_DEFAULT, replacement);
@@ -527,11 +456,11 @@ index a193f56..062c116 100644
 +            const replacedCoreEnd = suffixLength ? replacedCandidate.length - suffixLength : replacedCandidate.length;
 +            output.push(text.slice(outputStart, openingPosition));
 +            output.push(replacedCandidate.slice(prefixLength, replacedCoreEnd));
-+            outputStart = star.index + 1;
++            outputStart = starPosition + 1;
 +            openingPosition = undefined;
 +            continue;
 +        }
-+        openingPosition = canOpen(star.index) ? star.index : undefined;
++        openingPosition = canOpen(starPosition) ? starPosition : undefined;
 +    }
 +    if (output.length === 0) {
 +        return text;
@@ -546,7 +475,6 @@ index a193f56..062c116 100644
 +    const tildePositions = [];
 +    const protectedTags = [];
 +    const blockedTagNames = new Set(['a', 'code', 'pre', 'video']);
-+    let section = 0;
 +    let index = 0;
 +    while (index < text.length) {
 +        if (text[index] === '<') {
@@ -562,15 +490,9 @@ index a193f56..062c116 100644
 +                    const matchingTagIndex = protectedTags.lastIndexOf(tagName);
 +                    if (matchingTagIndex !== -1) {
 +                        protectedTags.splice(matchingTagIndex, 1);
-+                        if (protectedTags.length === 0) {
-+                            section++;
-+                        }
 +                    }
 +                }
 +                else if (!tag.endsWith('/')) {
-+                    if (protectedTags.length === 0) {
-+                        section++;
-+                    }
 +                    protectedTags.push(tagName);
 +                }
 +            }
@@ -578,7 +500,7 @@ index a193f56..062c116 100644
 +            continue;
 +        }
 +        if (text[index] === '~' && protectedTags.length === 0) {
-+            tildePositions.push({ index, section });
++            tildePositions.push(index);
 +        }
 +        index++;
 +    }
@@ -603,20 +525,18 @@ index a193f56..062c116 100644
 +    const output = [];
 +    let outputStart = 0;
 +    let openingPosition;
-+    let openingSection;
-+    for (const tilde of tildePositions) {
-+        if (openingPosition === undefined || openingSection !== tilde.section) {
-+            openingPosition = canOpen(tilde.index) ? tilde.index : undefined;
-+            openingSection = tilde.section;
++    for (const tildePosition of tildePositions) {
++        if (openingPosition === undefined) {
++            openingPosition = canOpen(tildePosition) ? tildePosition : undefined;
 +            continue;
 +        }
-+        if (!canClose(tilde.index)) {
++        if (!canClose(tildePosition)) {
 +            continue;
 +        }
 +        const prefixLength = openingPosition > 0 ? 1 : 0;
-+        const suffixLength = tilde.index + 1 < text.length ? 1 : 0;
++        const suffixLength = tildePosition + 1 < text.length ? 1 : 0;
 +        const candidateStart = openingPosition - prefixLength;
-+        const candidateEnd = tilde.index + 1 + suffixLength;
++        const candidateEnd = tildePosition + 1 + suffixLength;
 +        const candidate = text.slice(candidateStart, candidateEnd);
 +        regexp.lastIndex = 0;
 +        const replacedCandidate = replaceTextWithExtras(candidate, regexp, EXTRAS_DEFAULT, replacement);
@@ -624,11 +544,11 @@ index a193f56..062c116 100644
 +            const replacedCoreEnd = suffixLength ? replacedCandidate.length - suffixLength : replacedCandidate.length;
 +            output.push(text.slice(outputStart, openingPosition));
 +            output.push(replacedCandidate.slice(prefixLength, replacedCoreEnd));
-+            outputStart = tilde.index + 1;
++            outputStart = tildePosition + 1;
 +            openingPosition = undefined;
 +            continue;
 +        }
-+        openingPosition = canOpen(tilde.index) ? tilde.index : undefined;
++        openingPosition = canOpen(tildePosition) ? tildePosition : undefined;
 +    }
 +    if (output.length === 0) {
 +        return text;
@@ -639,18 +559,16 @@ index a193f56..062c116 100644
  /**
   * replace block element with '\n' if :
   * 1. We have text within the element.
-@@ -508,8 +713,8 @@ class ExpensiMark {
-             {
+@@ -509,7 +693,7 @@ class ExpensiMark {
                  name: 'autolink',
                  process: (textToProcess, replacement) => {
--                    const regex = new RegExp(`(?![^<]*>|[^<>]*<\\/(?!h1>))([_*~]*?)${UrlPatterns.MARKDOWN_URL_REGEX}\\1(?!((?:(?!<a).)+)?<\\/a>|[^<]*(<\\/pre>|<\\/code>))`, 'gi');
+                     const regex = new RegExp(`(?![^<]*>|[^<>]*<\\/(?!h1>))([_*~]*?)${UrlPatterns.MARKDOWN_URL_REGEX}\\1(?!((?:(?!<a).)+)?<\\/a>|[^<]*(<\\/pre>|<\\/code>))`, 'gi');
 -                    return this.modifyTextForUrlLinks(regex, textToProcess, replacement);
-+                    AUTOLINK_REGEX.lastIndex = 0;
-+                    return this.modifyTextForUrlLinks(AUTOLINK_REGEX, textToProcess, replacement, true);
++                    return this.modifyTextForUrlLinks(regex, textToProcess, replacement, true);
                  },
                  replacement: (_extras, _match, g1, g2) => {
                      const href = Str.sanitizeURL(g2);
-@@ -615,7 +820,8 @@ class ExpensiMark {
+@@ -615,7 +799,8 @@ class ExpensiMark {
                  // \B will match everything that \b doesn't, so it works
                  // for * and ~: https://www.rexegg.com/regex-boundaries.html#notb
                  name: 'bold',
@@ -660,7 +578,7 @@ index a193f56..062c116 100644
                  replacement: (_extras, match, g1, g2) => {
                      if (g1.includes('_')) {
                          return `${g1}<strong>${g2}</strong>`;
-@@ -625,7 +831,8 @@ class ExpensiMark {
+@@ -625,7 +810,8 @@ class ExpensiMark {
              },
              {
                  name: 'strikethrough',
@@ -670,7 +588,7 @@ index a193f56..062c116 100644
                  replacement: (_extras, match, g1) => (g1.includes('</pre>') || containsNonPairTag(g1) ? match : `<del>${g1}</del>`),
              },
              {
-@@ -1073,7 +1280,124 @@ class ExpensiMark {
+@@ -1073,7 +1259,100 @@ class ExpensiMark {
      /**
       * Checks matched URLs for validity and replace valid links with html elements
       */
@@ -736,38 +654,14 @@ index a193f56..062c116 100644
 +                }
 +                let candidateStart = hostnameStart;
 +                const protocol = textToCheck.slice(Math.max(0, hostnameStart - 8), hostnameStart).toLowerCase();
-+                let hasProtocol = false;
 +                if (protocol.endsWith('https://')) {
 +                    candidateStart = hostnameStart - 8;
-+                    hasProtocol = true;
 +                }
 +                else if (protocol.endsWith('http://')) {
 +                    candidateStart = hostnameStart - 7;
-+                    hasProtocol = true;
 +                }
 +                else if (protocol.endsWith('ftp://')) {
 +                    candidateStart = hostnameStart - 6;
-+                    hasProtocol = true;
-+                }
-+                const tld = textToCheck.slice(index + 1, tldEnd).toUpperCase();
-+                if (!hasProtocol && !VALID_TLDS.has(tld)) {
-+                    index++;
-+                    continue;
-+                }
-+                let labelStart = hostnameStart;
-+                let isValidHostname = tldEnd - hostnameStart <= 253;
-+                for (let hostnameIndex = hostnameStart; isValidHostname && hostnameIndex <= tldEnd; hostnameIndex++) {
-+                    if (hostnameIndex !== tldEnd && textToCheck[hostnameIndex] !== '.') {
-+                        continue;
-+                    }
-+                    const labelLength = hostnameIndex - labelStart;
-+                    isValidHostname = labelLength > 0 && labelLength <= 63 && textToCheck[labelStart] !== '-' && textToCheck[hostnameIndex - 1] !== '-';
-+                    labelStart = hostnameIndex + 1;
-+                }
-+                if (!isValidHostname) {
-+                    hostnameRunStart = index + 1;
-+                    index++;
-+                    continue;
 +                }
 +                if (candidateStart > 0 && textToCheck[candidateStart - 1] === '@') {
 +                    candidateStart--;
