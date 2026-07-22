@@ -3800,8 +3800,11 @@ function getIconsForChatThread(
     if (!report?.parentReportID || !report?.parentReportActionID) {
         return [];
     }
+    const parentReport = getParentReport(report as OnyxEntry<Report>);
     const parentReportAction = allReportActions?.[`${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${report.parentReportID}`]?.[report.parentReportActionID];
-    const actorAccountID = getReportActionActorAccountID(parentReportAction, report as OnyxEntry<Report>, report as OnyxEntry<Report>);
+    const actorAccountID =
+        getReportActionActorAccountID(parentReportAction, parentReport, report as OnyxEntry<Report>) ??
+        (isEmptyObject(parentReportAction) && isMoneyRequestReport(parentReport) ? parentReport?.ownerAccountID : undefined);
     const actorDetails = actorAccountID ? personalDetails?.[actorAccountID] : undefined;
     const actorDisplayName = temporaryGetDisplayNameOrDefault({passedPersonalDetails: actorDetails, defaultValue: '', shouldFallbackToHidden: false, translate});
     const actorIcon = {
@@ -3812,7 +3815,7 @@ function getIconsForChatThread(
         fallbackIcon: actorDetails?.fallbackIcon,
     };
 
-    if (isWorkspaceThread(report) || isTripRoom(report)) {
+    if (isWorkspaceThread(report) || isTripRoom(report) || (isExpenseReport(parentReport) && isEmptyObject(parentReportAction))) {
         const workspaceIcon = getWorkspaceIcon(report, policy);
         return [actorIcon, workspaceIcon];
     }

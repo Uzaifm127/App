@@ -947,6 +947,45 @@ function computeChatThreadReportName(
     return reportActionMessage;
 }
 
+function computeTransactionThreadReportNameWithMissingParentAction({
+    translate,
+    report,
+    reports,
+    transactions,
+}: {
+    translate: LocalizedTranslate;
+    report: Report;
+    reports?: OnyxCollection<Report>;
+    transactions: OnyxCollection<Transaction>;
+}): string | undefined {
+    if (!isChatThread(report)) {
+        return undefined;
+    }
+
+    const parentReport = reports?.[`${ONYXKEYS.COLLECTION.REPORT}${report.parentReportID}`];
+    if (!isMoneyRequestReport(parentReport)) {
+        return undefined;
+    }
+
+    const parentTransactions = Object.values(transactions ?? {}).filter((transaction): transaction is Transaction => !!transaction && transaction.reportID === report.parentReportID);
+    const exactTransaction = parentTransactions.find((transaction) => transaction.transactionThreadReportID === report.reportID);
+
+    if (!exactTransaction && report.chatReportID !== report.parentReportID) {
+        return undefined;
+    }
+
+    const linkedTransaction = exactTransaction ?? (parentTransactions.length === 1 ? parentTransactions.at(0) : undefined);
+
+    return formatReportLastMessageText(
+        getTransactionReportName({
+            translate,
+            reportAction: undefined,
+            linkedTransaction,
+            report: parentReport,
+        }),
+    );
+}
+
 /**
  * @internal Use this only for computation in derived report attributes
  * In all other cases you should use `getReportName`
@@ -1038,6 +1077,18 @@ function computeReportName({
     );
     if (chatThreadReportName) {
         return chatThreadReportName;
+    }
+
+    if (!parentReportAction) {
+        const transactionThreadReportName = computeTransactionThreadReportNameWithMissingParentAction({
+            translate,
+            report,
+            reports,
+            transactions,
+        });
+        if (transactionThreadReportName) {
+            return transactionThreadReportName;
+        }
     }
 
     const transactionsArray = transactions ? (Object.values(transactions).filter(Boolean) as Array<OnyxEntry<Transaction>>) : undefined;
