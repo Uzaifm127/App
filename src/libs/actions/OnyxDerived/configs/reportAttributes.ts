@@ -375,7 +375,10 @@ export default createOnyxDerivedValueConfig({
                 if (!!transactionsUpdates || !!transactionViolationsUpdates) {
                     let transactionReportIDs: string[] = [];
                     if (transactionsUpdates) {
-                        transactionReportIDs = Object.values(transactionsUpdates).map((transaction) => `${ONYXKEYS.COLLECTION.REPORT}${transaction?.reportID}`);
+                        transactionReportIDs = Object.values(transactionsUpdates).flatMap((transaction) => [
+                            `${ONYXKEYS.COLLECTION.REPORT}${transaction?.reportID}`,
+                            ...(transaction?.transactionThreadReportID ? [`${ONYXKEYS.COLLECTION.REPORT}${transaction.transactionThreadReportID}`] : []),
+                        ]);
 
                         const updatedTransactionIDs = new Set(Object.keys(transactionsUpdates).map((key) => key.replace(ONYXKEYS.COLLECTION.TRANSACTION, '')));
                         if (updatedTransactionIDs.size > 0) {
