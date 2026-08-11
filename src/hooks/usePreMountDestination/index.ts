@@ -26,7 +26,7 @@ type TransitionCancelHandle = {
  * dismiss creates a visible gap (narrow) or flashes the previous page (wide) while React mounts the destination tree.
  */
 function usePreMountDestination(route: Route | undefined, options?: UsePreMountDestinationOptions): UsePreMountDestinationResult {
-    const {narrowDestinationStrategy = CONST.NARROW_DESTINATION_STRATEGY.PRE_INSERT, shouldPreservePreInsertedRouteOnUnmount} = options ?? {};
+    const {narrowDestinationStrategy = CONST.NARROW_DESTINATION_STRATEGY.PRE_INSERT, shouldPreserveReportStack = false, shouldPreservePreInsertedRouteOnUnmount} = options ?? {};
 
     const preInsertTaskRef = useRef<IdleTask | undefined>(undefined);
     const transitionCancelHandleRef = useRef<TransitionCancelHandle | undefined>(undefined);
@@ -60,7 +60,11 @@ function usePreMountDestination(route: Route | undefined, options?: UsePreMountD
             return;
         }
 
-        Navigation.preInsertFullscreenUnderRHP(routeToPreInsert);
+        if (shouldPreserveReportStack) {
+            Navigation.preInsertFullscreenUnderRHP(routeToPreInsert, {shouldPreserveReportStack: true});
+        } else {
+            Navigation.preInsertFullscreenUnderRHP(routeToPreInsert);
+        }
 
         if (Navigation.getIsFullscreenPreInsertedUnderRHP()) {
             preInsertedRouteRef.current = routeToPreInsert;
@@ -87,6 +91,14 @@ function usePreMountDestination(route: Route | undefined, options?: UsePreMountD
 
         if (!route) {
             Navigation.dismissModal({afterTransition});
+            return;
+        }
+
+        if (shouldPreserveReportStack) {
+            Navigation.revealRouteBeforeDismissingModal(route, {
+                shouldPreserveReportStack: true,
+                ...(afterTransition ? {afterTransition} : {}),
+            });
             return;
         }
 
@@ -136,7 +148,7 @@ function usePreMountDestination(route: Route | undefined, options?: UsePreMountD
         return () => {
             cancelPreInsert();
         };
-    }, [route, narrowDestinationStrategy]);
+    }, [route, narrowDestinationStrategy, shouldPreserveReportStack]);
 
     return {
         reveal: revealDestination,

@@ -1,5 +1,9 @@
-import {handleReplaceFullscreenUnderRHP} from '@libs/Navigation/AppNavigator/createRootStackNavigator/GetStateForActionHandlers';
-import type {ReplaceFullscreenUnderRHPActionType} from '@libs/Navigation/AppNavigator/createRootStackNavigator/types';
+import {
+    clearPreInsertedOriginalTabRoute,
+    handleRemoveFullscreenUnderRHP,
+    handleReplaceFullscreenUnderRHP,
+} from '@libs/Navigation/AppNavigator/createRootStackNavigator/GetStateForActionHandlers';
+import type {RemoveFullscreenUnderRHPActionType, ReplaceFullscreenUnderRHPActionType} from '@libs/Navigation/AppNavigator/createRootStackNavigator/types';
 import type {NavigationPartialRoute, NavigationStateRoute} from '@libs/Navigation/types';
 
 import CONST from '@src/CONST';
@@ -96,10 +100,52 @@ function makeExistingState(workspaceNavNestedRoutes: PartialState<NavigationStat
     return makeStackState([tabNavRoute, makeRHPRoute()]);
 }
 
+function makeParsedReportsState(reportID: string): PartialState<NavigationState> {
+    return {
+        routes: [
+            {
+                name: NAVIGATORS.TAB_NAVIGATOR,
+                state: {
+                    index: 0,
+                    routes: [
+                        {
+                            name: NAVIGATORS.REPORTS_SPLIT_NAVIGATOR,
+                            state: {index: 0, routes: [makeRoute(SCREENS.REPORT, {reportID})]},
+                        },
+                    ],
+                },
+            },
+        ],
+    };
+}
+
+function makeExistingReportsState(reportsNestedRoutes: PartialState<NavigationState>['routes'], reportsIndex = reportsNestedRoutes.length - 1): StackNavigationState<ParamListBase> {
+    const reportsRoute = makeRoute(NAVIGATORS.REPORTS_SPLIT_NAVIGATOR, undefined, {index: reportsIndex, routes: reportsNestedRoutes}, 'reports-split-key');
+    const tabNavRoute = makeRoute(NAVIGATORS.TAB_NAVIGATOR, undefined, {index: 0, routes: [reportsRoute]}, 'tab-nav-key');
+    return makeStackState([tabNavRoute, makeRHPRoute()]);
+}
+
 function makeAction(): ReplaceFullscreenUnderRHPActionType {
     return {
         type: CONST.NAVIGATION.ACTION_TYPE.REPLACE_FULLSCREEN_UNDER_RHP,
         payload: {route: ROUTES.WORKSPACE_INITIAL.getRoute('NEW')},
+    };
+}
+
+function makeReportAction(reportID: string, shouldPreserveReportStack = false): ReplaceFullscreenUnderRHPActionType {
+    return {
+        type: CONST.NAVIGATION.ACTION_TYPE.REPLACE_FULLSCREEN_UNDER_RHP,
+        payload: {
+            route: ROUTES.REPORT_WITH_ID.getRoute(reportID),
+            ...(shouldPreserveReportStack ? {shouldPreserveReportStack: true} : {}),
+        },
+    };
+}
+
+function makeRemoveAction(): RemoveFullscreenUnderRHPActionType {
+    return {
+        type: CONST.NAVIGATION.ACTION_TYPE.REMOVE_FULLSCREEN_UNDER_RHP,
+        payload: {expectedRouteName: NAVIGATORS.REPORTS_SPLIT_NAVIGATOR},
     };
 }
 
@@ -117,6 +163,23 @@ function getWorkspaceNavInnerRoutes(result: StackNavigationState<ParamListBase> 
         navigatorKey: workspaceNav?.key,
     };
 }
+
+function getReportsSplitInnerRoutes(result: StackNavigationState<ParamListBase> | null) {
+    const tabRoute = result?.routes.find((r) => r.name === NAVIGATORS.TAB_NAVIGATOR);
+    const tabState = tabRoute?.state;
+    const reportsSplit = tabState?.routes.find((r) => r.name === NAVIGATORS.REPORTS_SPLIT_NAVIGATOR);
+    const reportsSplitState = reportsSplit?.state;
+    const routes = reportsSplitState?.routes ?? [];
+    return {
+        names: routes.map((route) => route.name),
+        reportIDs: routes.filter((route) => route.name === SCREENS.REPORT).map((route) => (route.params as {reportID?: string} | undefined)?.reportID),
+        index: reportsSplitState?.index,
+    };
+}
+
+afterEach(() => {
+    clearPreInsertedOriginalTabRoute();
+});
 
 describe('handleReplaceFullscreenUnderRHP — WORKSPACE_NAVIGATOR seeding', () => {
     it('seeds [WORKSPACES_LIST, split] when the workspace tab was never mounted (guards iOS swipe-back regression #93003)', () => {
@@ -210,5 +273,64 @@ describe('handleReplaceFullscreenUnderRHP — WORKSPACE_NAVIGATOR seeding', () =
         const result = handleReplaceFullscreenUnderRHP(tabOnly, makeAction(), CONFIG_OPTIONS, stackRouter);
 
         expect(result).toBeNull();
+    });
+});
+
+describe('handleReplaceFullscreenUnderRHP — Track Expense report pre-insert', () => {
+    const selfDMReportID = 'self-dm';
+    const olderReportID = 'older-report';
+    const workspaceReportID = 'workspace-chat';
+
+    it('keeps the complete Reports stack below a different destination report when explicitly requested', () => {
+        mockStubbedParsedState = makeParsedReportsState(workspaceReportID);
+        const existing = makeExistingReportsState([makeRoute(SCREENS.INBOX), makeRoute(SCREENS.REPORT, {reportID: olderReportID}), makeRoute(SCREENS.REPORT, {reportID: selfDMReportID})], 2);
+
+        const result = handleReplaceFullscreenUnderRHP(existing, makeReportAction(workspaceReportID, true), CONFIG_OPTIONS, stackRouter);
+
+        expect(getReportsSplitInnerRoutes(result)).toEqual({
+            names: [SCREENS.INBOX, SCREENS.REPORT, SCREENS.REPORT, SCREENS.REPORT],
+            reportIDs: [olderReportID, selfDMReportID, workspaceReportID],
+            index: 3,
+        });
+    });
+
+    it('keeps the existing generic behavior when the report-stack strategy is not requested', () => {
+        mockStubbedParsedState = makeParsedReportsState(workspaceReportID);
+        const existing = makeExistingReportsState([makeRoute(SCREENS.INBOX), makeRoute(SCREENS.REPORT, {reportID: selfDMReportID})]);
+
+        const result = handleReplaceFullscreenUnderRHP(existing, makeReportAction(workspaceReportID), CONFIG_OPTIONS, stackRouter);
+
+        expect(getReportsSplitInnerRoutes(result)).toEqual({
+            names: [SCREENS.INBOX, SCREENS.REPORT],
+            reportIDs: [workspaceReportID],
+            index: 1,
+        });
+    });
+
+    it('does not add a duplicate route when the incoming report is already focused', () => {
+        mockStubbedParsedState = makeParsedReportsState(selfDMReportID);
+        const existing = makeExistingReportsState([makeRoute(SCREENS.INBOX), makeRoute(SCREENS.REPORT, {reportID: selfDMReportID})]);
+
+        const result = handleReplaceFullscreenUnderRHP(existing, makeReportAction(selfDMReportID, true), CONFIG_OPTIONS, stackRouter);
+
+        expect(getReportsSplitInnerRoutes(result)).toEqual({
+            names: [SCREENS.INBOX, SCREENS.REPORT],
+            reportIDs: [selfDMReportID],
+            index: 1,
+        });
+    });
+
+    it('restores the exact original Reports stack when the user cancels the pre-inserted flow', () => {
+        mockStubbedParsedState = makeParsedReportsState(workspaceReportID);
+        const existing = makeExistingReportsState([makeRoute(SCREENS.INBOX), makeRoute(SCREENS.REPORT, {reportID: selfDMReportID})]);
+        const preInserted = handleReplaceFullscreenUnderRHP(existing, makeReportAction(workspaceReportID, true), CONFIG_OPTIONS, stackRouter);
+
+        const restored = handleRemoveFullscreenUnderRHP(preInserted ?? existing, makeRemoveAction(), CONFIG_OPTIONS, stackRouter);
+
+        expect(getReportsSplitInnerRoutes(restored)).toEqual({
+            names: [SCREENS.INBOX, SCREENS.REPORT],
+            reportIDs: [selfDMReportID],
+            index: 1,
+        });
     });
 });

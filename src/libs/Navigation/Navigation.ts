@@ -1074,7 +1074,15 @@ function dismissToSuperWideRHP(options: {afterTransition?: () => void} = {}) {
  *   Frame 2 - DISMISS_MODAL pops the RHP: [Tab, Tab', RHP] -> [Tab, Tab'].
  *             useLinking syncs browser history to the new top fullscreen route.
  */
-function revealRouteBeforeDismissingModal(route: Route, options?: {afterTransition?: () => void}) {
+type FullscreenUnderRHPOptions = {
+    /**
+     * Preserve a different report already focused in the Reports tab below the incoming report.
+     * This is used by the Track Expense move flow so its pre-insertion has normal push-like Back behavior.
+     */
+    shouldPreserveReportStack?: boolean;
+};
+
+function revealRouteBeforeDismissingModal(route: Route, options?: {afterTransition?: () => void} & FullscreenUnderRHPOptions) {
     if (!canNavigate('revealRouteBeforeDismissingModal', {route}) || !navigationRef.current) {
         Log.hmmm(`[Navigation] Unable to reveal route before dismissing modal. Can't navigate.`, {route});
         return;
@@ -1083,7 +1091,7 @@ function revealRouteBeforeDismissingModal(route: Route, options?: {afterTransiti
     requestAnimationFrame(() => {
         navigationRef.current?.dispatch({
             type: CONST.NAVIGATION.ACTION_TYPE.REPLACE_FULLSCREEN_UNDER_RHP,
-            payload: {route},
+            payload: {route, ...(options?.shouldPreserveReportStack ? {shouldPreserveReportStack: true} : {})},
         });
         // Nested rAF: the first frame commits the route insertion, the second
         // frame starts the dismiss. This ensures React processes the two dispatches
@@ -1113,7 +1121,7 @@ let preInsertedFullscreenRouteName: string | undefined;
  * submission time, giving React time to mount the destination component tree while
  * the user is still filling in details.
  */
-function preInsertFullscreenUnderRHP(route: Route) {
+function preInsertFullscreenUnderRHP(route: Route, options?: FullscreenUnderRHPOptions) {
     if (!getIsNarrowLayout()) {
         return;
     }
@@ -1139,7 +1147,7 @@ function preInsertFullscreenUnderRHP(route: Route) {
 
     navigationRef.current.dispatch({
         type: CONST.NAVIGATION.ACTION_TYPE.REPLACE_FULLSCREEN_UNDER_RHP,
-        payload: {route},
+        payload: {route, ...(options?.shouldPreserveReportStack ? {shouldPreserveReportStack: true} : {})},
     });
 
     const stateAfter = navigationRef.current.getRootState();

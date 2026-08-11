@@ -141,6 +141,18 @@ describe('usePreMountDestination', () => {
             expect(Navigation.preInsertFullscreenUnderRHP).toHaveBeenCalledWith(route);
         });
 
+        it('passes the report-stack strategy to the eager pre-insert', () => {
+            const {finishOpenTransition} = mockOpenTransitionWait();
+            renderHook(() => usePreMountDestination(reportRoute, {shouldPreserveReportStack: true}));
+
+            act(() => {
+                finishOpenTransition();
+                flushPendingIdlePreInserts();
+            });
+
+            expect(Navigation.preInsertFullscreenUnderRHP).toHaveBeenCalledWith(reportRoute, {shouldPreserveReportStack: true});
+        });
+
         it('does not pre-insert on wide layout', () => {
             mockGetIsNarrowLayout.mockReturnValue(false);
             renderHook(() => usePreMountDestination(route));
@@ -366,6 +378,16 @@ describe('usePreMountDestination', () => {
             });
 
             expect(Navigation.revealRouteBeforeDismissingModal).toHaveBeenCalledWith(route, {afterTransition});
+        });
+
+        it('passes the report-stack strategy to the fallback reveal', () => {
+            const {result} = renderHook(() => usePreMountDestination(reportRoute, {shouldPreserveReportStack: true}));
+
+            act(() => {
+                result.current.reveal(afterTransition);
+            });
+
+            expect(Navigation.revealRouteBeforeDismissingModal).toHaveBeenCalledWith(reportRoute, {afterTransition, shouldPreserveReportStack: true});
         });
 
         it('reveal falls back without afterTransition when no callback is provided', () => {

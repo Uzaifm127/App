@@ -204,7 +204,22 @@ function getFocusedRouteFromNavigatorState(navState: NavigationState | PartialSt
     return navState.routes[idx] as NavigationPartialRoute;
 }
 
-function getTargetTabRoute(existingTabRoute: TabRouteForReplacement | undefined, focusedTargetTab: NavigationPartialRoute): TabRouteForReplacement {
+function getFocusedRouteIndex(navState: NavigationState | PartialState<NavigationState> | undefined): number {
+    if (!navState?.routes?.length) {
+        return -1;
+    }
+    return typeof navState.index === 'number' && navState.routes[navState.index] !== undefined ? navState.index : 0;
+}
+
+function getReportID(route: NavigationPartialRoute | undefined): string | undefined {
+    if (route?.name !== SCREENS.REPORT || !route.params || typeof route.params !== 'object' || !('reportID' in route.params)) {
+        return undefined;
+    }
+    const reportID = route.params.reportID;
+    return typeof reportID === 'string' ? reportID : undefined;
+}
+
+function getTargetTabRoute(existingTabRoute: TabRouteForReplacement | undefined, focusedTargetTab: NavigationPartialRoute, shouldPreserveReportStack = false): TabRouteForReplacement {
     // Prepend a back-target route beneath the incoming screen when the incoming state starts with a
     // different screen, so back navigation lands somewhere sensible: the existing sidebar/root route
     // (e.g. Inbox) for most tabs, or WORKSPACES_LIST for the workspace navigator. When the existing tab
@@ -215,25 +230,50 @@ function getTargetTabRoute(existingTabRoute: TabRouteForReplacement | undefined,
     const newNestedRoutes = focusedTargetTab.state?.routes;
     const existingFirstRoute = existingNestedRoutes?.at(0);
     const newFirstRoute = newNestedRoutes?.at(0);
-    const defaultSidebarRouteName = getSidebarRouteName(existingTabRoute?.name ?? focusedTargetTab.name);
-    // The route prepended beneath the incoming screen so back navigation has a target. For most tabs this is
-    // the sidebar/root route; for WORKSPACE_NAVIGATOR it is WORKSPACES_LIST (a list screen, not a sidebar).
-    let backTargetRoute: NavigationPartialRoute | undefined;
-    if (focusedTargetTab.name === NAVIGATORS.WORKSPACE_NAVIGATOR) {
-        // Always seed a FRESH (keyless) WORKSPACES_LIST so it mounts born-non-top, even when the
-        // user backed into the list and it is the mounted, visible top. Reusing the existing list's key
-        // makes react-native-screens reorder it top->non-top during the reveal and flash it (#90985). A
-        // keyless route is never the active top, so there is no reorder to flash; it gets a fresh key on
-        // rehydration. The list's params (e.g. backTo) are carried over so the back target survives.
-        // The prepend below is a no-op when the incoming state already starts with WORKSPACES_LIST.
-        const existingListParams = existingFirstRoute?.name === SCREENS.WORKSPACES_LIST ? existingFirstRoute.params : undefined;
-        backTargetRoute = {name: SCREENS.WORKSPACES_LIST, ...(existingListParams ? {params: existingListParams} : {})};
+
+    // Track Expense moves normally push the destination workspace report above the Self DM.
+    // The generic lazy-tab merge below only keeps the sidebar (Inbox), which loses that report.
+    // Keep the already-focused report stack only when this behavior was explicitly requested and
+    // both sides are different Report screens. Other pre-insert callers keep the generic merge.
+    const existingNestedState = existingTabRoute?.state as PartialState<NavigationState> | undefined;
+    const existingFocusedRouteIndex = getFocusedRouteIndex(existingNestedState);
+    const existingFocusedRoute = existingFocusedRouteIndex >= 0 ? (existingNestedRoutes?.[existingFocusedRouteIndex] as NavigationPartialRoute | undefined) : undefined;
+    const incomingFocusedRoute = getFocusedRouteFromNavigatorState(focusedTargetTab.state);
+    const existingReportID = getReportID(existingFocusedRoute);
+    const incomingReportID = getReportID(incomingFocusedRoute);
+    if (
+        shouldPreserveReportStack &&
+        focusedTargetTab.name === NAVIGATORS.REPORTS_SPLIT_NAVIGATOR &&
+        existingNestedRoutes &&
+        existingFocusedRouteIndex >= 0 &&
+        incomingFocusedRoute &&
+        existingReportID &&
+        incomingReportID &&
+        existingReportID !== incomingReportID
+    ) {
+        const preservedRoutes = [...existingNestedRoutes.slice(0, existingFocusedRouteIndex + 1), incomingFocusedRoute];
+        mergedNestedState = {...focusedTargetTab.state, routes: preservedRoutes, index: preservedRoutes.length - 1};
     } else {
-        backTargetRoute = existingFirstRoute ?? (defaultSidebarRouteName ? {name: defaultSidebarRouteName} : undefined);
-    }
-    if (backTargetRoute && newFirstRoute && backTargetRoute.name !== newFirstRoute.name) {
-        const prependedRoutes = [backTargetRoute, ...(newNestedRoutes ?? [])];
-        mergedNestedState = {...focusedTargetTab.state, routes: prependedRoutes, index: prependedRoutes.length - 1};
+        const defaultSidebarRouteName = getSidebarRouteName(existingTabRoute?.name ?? focusedTargetTab.name);
+        // The route prepended beneath the incoming screen so back navigation has a target. For most tabs this is
+        // the sidebar/root route; for WORKSPACE_NAVIGATOR it is WORKSPACES_LIST (a list screen, not a sidebar).
+        let backTargetRoute: NavigationPartialRoute | undefined;
+        if (focusedTargetTab.name === NAVIGATORS.WORKSPACE_NAVIGATOR) {
+            // Always seed a FRESH (keyless) WORKSPACES_LIST so it mounts born-non-top, even when the
+            // user backed into the list and it is the mounted, visible top. Reusing the existing list's key
+            // makes react-native-screens reorder it top->non-top during the reveal and flash it (#90985). A
+            // keyless route is never the active top, so there is no reorder to flash; it gets a fresh key on
+            // rehydration. The list's params (e.g. backTo) are carried over so the back target survives.
+            // The prepend below is a no-op when the incoming state already starts with WORKSPACES_LIST.
+            const existingListParams = existingFirstRoute?.name === SCREENS.WORKSPACES_LIST ? existingFirstRoute.params : undefined;
+            backTargetRoute = {name: SCREENS.WORKSPACES_LIST, ...(existingListParams ? {params: existingListParams} : {})};
+        } else {
+            backTargetRoute = existingFirstRoute ?? (defaultSidebarRouteName ? {name: defaultSidebarRouteName} : undefined);
+        }
+        if (backTargetRoute && newFirstRoute && backTargetRoute.name !== newFirstRoute.name) {
+            const prependedRoutes = [backTargetRoute, ...(newNestedRoutes ?? [])];
+            mergedNestedState = {...focusedTargetTab.state, routes: prependedRoutes, index: prependedRoutes.length - 1};
+        }
     }
 
     if (!existingTabRoute) {
@@ -253,7 +293,11 @@ function getTargetTabRoute(existingTabRoute: TabRouteForReplacement | undefined,
     };
 }
 
-function getTabStateWithExistingFocusedTarget(existingTabState: NavigationState, focusedTargetTab: NavigationPartialRoute): TabStateForReplacement | undefined {
+function getTabStateWithExistingFocusedTarget(
+    existingTabState: NavigationState,
+    focusedTargetTab: NavigationPartialRoute,
+    shouldPreserveReportStack: boolean,
+): TabStateForReplacement | undefined {
     const targetTabIndex = existingTabState.routes.findIndex((r) => r.name === focusedTargetTab.name);
 
     if (targetTabIndex < 0) {
@@ -264,14 +308,18 @@ function getTabStateWithExistingFocusedTarget(existingTabState: NavigationState,
         if (index !== targetTabIndex) {
             return route;
         }
-        return getTargetTabRoute(route, focusedTargetTab);
+        return getTargetTabRoute(route, focusedTargetTab, shouldPreserveReportStack);
     });
     return {...existingTabState, routes: updatedTabRoutes, index: targetTabIndex};
 }
 
-function getTabStateWithFocusedTarget(existingTabState: NavigationState | undefined, focusedTargetTab: NavigationPartialRoute): TabStateForReplacement | undefined {
+function getTabStateWithFocusedTarget(
+    existingTabState: NavigationState | undefined,
+    focusedTargetTab: NavigationPartialRoute,
+    shouldPreserveReportStack: boolean,
+): TabStateForReplacement | undefined {
     if (existingTabState?.routes?.length) {
-        const tabStateWithExistingTarget = getTabStateWithExistingFocusedTarget(existingTabState, focusedTargetTab);
+        const tabStateWithExistingTarget = getTabStateWithExistingFocusedTarget(existingTabState, focusedTargetTab, shouldPreserveReportStack);
         if (tabStateWithExistingTarget) {
             return tabStateWithExistingTarget;
         }
@@ -285,7 +333,7 @@ function getTabStateWithFocusedTarget(existingTabState: NavigationState | undefi
 
     const updatedTabRoutes = completeTabState.routes.map((route) => {
         if (route.name === focusedTargetTab.name) {
-            return getTargetTabRoute(undefined, focusedTargetTab);
+            return getTargetTabRoute(undefined, focusedTargetTab, shouldPreserveReportStack);
         }
         return existingTabState?.routes.find((r) => r.name === route.name) ?? route;
     });
@@ -443,7 +491,7 @@ function handleReplaceFullscreenUnderRHP(
         if (!focusedTargetTab) {
             return null;
         }
-        const updatedTabState = getTabStateWithFocusedTarget(existingTabState, focusedTargetTab);
+        const updatedTabState = getTabStateWithFocusedTarget(existingTabState, focusedTargetTab, action.payload.shouldPreserveReportStack === true);
         if (!updatedTabState) {
             return null;
         }

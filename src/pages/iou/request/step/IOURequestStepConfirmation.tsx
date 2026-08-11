@@ -594,6 +594,10 @@ function IOURequestStepConfirmation({
     );
 
     const {reveal: revealPreMountDestination, cleanupPreMount} = usePreMountDestination(preMountDestinationRoute, {
+        // A Track Expense move should behave like pushing the workspace report on top of the Self DM.
+        // Pass this only to the pre-insert action; the reducer verifies both routes are different reports
+        // before merging anything, so all other lazy navigation keeps its existing behavior.
+        shouldPreserveReportStack: isMovingTransactionFromTrackExpense,
         shouldPreservePreInsertedRouteOnUnmount: () => formHasBeenSubmitted.current,
     });
 

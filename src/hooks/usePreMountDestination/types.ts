@@ -19,6 +19,13 @@ type UsePreMountDestinationOptions = {
     narrowDestinationStrategy?: NarrowDestinationStrategy;
 
     /**
+     * For the Track Expense move flow, retain the currently focused report underneath a different
+     * destination report. This makes the pre-inserted state match a normal report push, so Back
+     * returns to the originating Self DM instead of Inbox.
+     */
+    shouldPreserveReportStack?: boolean;
+
+    /**
      * When true on unmount, the pre-inserted route is preserved (e.g. the user submitted
      * and the caller dismisses the modal separately). Used by flows where reveal() is not
      * invoked directly from the same component that owns the hook. If the preserve condition
