@@ -8896,6 +8896,7 @@ er bestedingsregels toe om de kasstroom van het bedrijf te beschermen.`,
         screenShareRequest: 'Expensify nodigt je uit voor een schermdeling',
     },
     search: {
+        created: 'Aangemaakt',
         resultsAreLimited: 'Zoekresultaten zijn beperkt.',
         viewResults: 'Resultaten bekijken',
         applyFilters: 'Filters toepassen',
@@ -8987,6 +8988,7 @@ er bestedingsregels toe om de kasstroom van het bedrijf te beschermen.`,
         },
         filtersHeader: 'Filters',
         filters: {
+            createdDate: 'Aanmaakdatum',
             date: {
                 before: (date?: string) => `Voor ${date ?? ''}`,
                 after: (date?: string) => `Na ${date ?? ''}`,

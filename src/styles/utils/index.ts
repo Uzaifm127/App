@@ -59,6 +59,7 @@ import splitPercentageInputStyles from './splitPercentageInputStyles';
 
 type GetReportTableColumnStylesParams = {
     isDateColumnWide?: boolean;
+    isDateColumnCreated?: boolean;
     isAmountColumnWide?: boolean;
     isTaxAmountColumnWide?: boolean;
     isSubmittedColumnWide?: boolean;
@@ -1926,6 +1927,7 @@ const createStyleUtils = (theme: ThemeColors, styles: ThemeStyles) => ({
             isPostedColumnWide,
             isExportedColumnWide,
             isDateColumnWide,
+            isDateColumnCreated,
             isTaxAmountColumnWide,
             isAmountColumnWide,
             shouldRemoveTotalColumnFlex,
@@ -1988,6 +1990,9 @@ const createStyleUtils = (theme: ThemeColors, styles: ThemeStyles) => ({
                 columnWidth = {
                     ...getWidthStyle(isDateColumnWide ? variables.w102 : variables.w62),
                 };
+                if (isDateColumnCreated && !isDateColumnWide) {
+                    columnWidth = {...getWidthStyle(variables.w72)};
+                }
                 break;
             case CONST.SEARCH.TABLE_COLUMNS.WITHDRAWN:
             case CONST.SEARCH.TABLE_COLUMNS.GROUP_WITHDRAWN:

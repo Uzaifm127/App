@@ -8812,6 +8812,7 @@ ${reportName}`,
         screenShareRequest: 'Expensify が画面共有にあなたを招待しています',
     },
     search: {
+        created: '作成済み',
         resultsAreLimited: '検索結果は制限されています。',
         viewResults: '結果を表示',
         applyFilters: 'フィルターを適用する',
@@ -8903,6 +8904,7 @@ ${reportName}`,
         },
         filtersHeader: 'フィルター',
         filters: {
+            createdDate: '作成日',
             date: {
                 before: (date?: string) => `${date ?? ''} より前`,
                 after: (date?: string) => `${date ?? ''} の後`,

@@ -11449,6 +11449,11 @@ describe('SearchUIUtils', () => {
     });
 
     describe('Test getSearchColumnTranslationKey', () => {
+        it('should return Created for the DATE column', () => {
+            const translationKey = SearchUIUtils.getSearchColumnTranslationKey(CONST.SEARCH.TABLE_COLUMNS.DATE);
+            expect(translationKey).toBe('search.created');
+        });
+
         it('should return correct translation key for GROUP_CATEGORY', () => {
             const translationKey = SearchUIUtils.getSearchColumnTranslationKey(CONST.SEARCH.TABLE_COLUMNS.GROUP_CATEGORY);
             expect(translationKey).toBe('common.category');
@@ -11492,6 +11497,21 @@ describe('SearchUIUtils', () => {
         it('should return correct translation key for WITHDRAWAL_ID column', () => {
             const translationKey = SearchUIUtils.getSearchColumnTranslationKey(CONST.SEARCH.TABLE_COLUMNS.WITHDRAWAL_ID);
             expect(translationKey).toBe('common.withdrawalID');
+        });
+    });
+
+    describe('Search date column configuration', () => {
+        it('should use Created in Search and keep Date in the single-report table', () => {
+            const reportDateHeader = getExpenseHeaders().find(({columnName}) => columnName === CONST.SEARCH.TABLE_COLUMNS.DATE);
+            const searchDateHeader = getExpenseHeaders(undefined, true).find(({columnName}) => columnName === CONST.SEARCH.TABLE_COLUMNS.DATE);
+
+            expect(reportDateHeader?.translationKey).toBe('common.date');
+            expect(searchDateHeader?.translationKey).toBe('search.created');
+        });
+
+        it('should reserve the wider date column only for Search tables', () => {
+            expect(SearchUIUtils.getTableMinWidth([CONST.SEARCH.TABLE_COLUMNS.DATE])).toBe(72);
+            expect(SearchUIUtils.getTableMinWidth([CONST.SEARCH.TABLE_COLUMNS.DATE], undefined, undefined, true)).toBe(96);
         });
     });
 

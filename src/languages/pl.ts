@@ -8873,6 +8873,7 @@ Dodaj więcej zasad wydatków, żeby chronić płynność finansową firmy.`,
         screenShareRequest: 'Expensify zaprasza Cię do udostępnienia ekranu',
     },
     search: {
+        created: 'Utworzono',
         resultsAreLimited: 'Wyniki wyszukiwania są ograniczone.',
         viewResults: 'Zobacz wyniki',
         applyFilters: 'Zastosuj filtry',
@@ -8964,6 +8965,7 @@ Dodaj więcej zasad wydatków, żeby chronić płynność finansową firmy.`,
         },
         filtersHeader: 'Filtry',
         filters: {
+            createdDate: 'Data utworzenia',
             date: {
                 before: (date?: string) => `Przed ${date ?? ''}`,
                 after: (date?: string) => `Po ${date ?? ''}`,

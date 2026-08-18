@@ -30,6 +30,7 @@ type SearchTableHeaderProps = {
     sortBy?: SearchSortBy;
     sortOrder?: SortOrder;
     shouldShowSorting: boolean;
+    isDateColumnCreated?: boolean;
     dateColumnSize: TableColumnSize;
     submittedColumnSize?: TableColumnSize;
     approvedColumnSize?: TableColumnSize;
@@ -50,6 +51,7 @@ function SortableTableHeader({
     sortBy,
     sortOrder,
     shouldShowColumn,
+    isDateColumnCreated,
     dateColumnSize,
     submittedColumnSize,
     approvedColumnSize,
@@ -103,6 +105,7 @@ function SortableTableHeader({
                             containerStyle={[
                                 StyleUtils.getReportTableColumnStyles(columnName, {
                                     isDateColumnWide: dateColumnSize === CONST.SEARCH.TABLE_COLUMN_SIZES.WIDE,
+                                    isDateColumnCreated,
                                     isSubmittedColumnWide: submittedColumnSize === CONST.SEARCH.TABLE_COLUMN_SIZES.WIDE,
                                     isApprovedColumnWide: approvedColumnSize === CONST.SEARCH.TABLE_COLUMN_SIZES.WIDE,
                                     isPostedColumnWide: postedColumnSize === CONST.SEARCH.TABLE_COLUMN_SIZES.WIDE,

@@ -4570,7 +4570,7 @@ function getSearchColumnTranslationKey(column: SearchSortBy): TranslationPaths {
         case CONST.SEARCH.TABLE_COLUMNS.AVATAR:
             return 'common.avatar';
         case CONST.SEARCH.TABLE_COLUMNS.DATE:
-            return 'common.date';
+            return 'search.created';
         case CONST.SEARCH.TABLE_COLUMNS.SUBMITTED:
             return 'common.submitted';
         case CONST.SEARCH.TABLE_COLUMNS.APPROVED:
@@ -5544,7 +5544,7 @@ const FILTER_VIEW_MAP = {
         icon: 'Coins',
     },
     [CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE]: {
-        labelKey: 'common.date',
+        labelKey: 'search.filters.createdDate',
         icon: 'CalendarSolid',
     },
     [CONST.SEARCH.SYNTAX_FILTER_KEYS.APPROVED]: {
@@ -6657,7 +6657,7 @@ function getTransactionFromTransactionListItem(item: TransactionListItemType): O
     return transaction as OnyxTypes.Transaction;
 }
 
-function getTableMinWidth(columns: SearchColumnType[], type?: SearchDataTypes, isActionColumnWide?: boolean) {
+function getTableMinWidth(columns: SearchColumnType[], type?: SearchDataTypes, isActionColumnWide?: boolean, isDateColumnCreated = false) {
     // Starts at 24px to account for the checkbox width
     let minWidth = 24;
 
@@ -6673,7 +6673,7 @@ function getTableMinWidth(columns: SearchColumnType[], type?: SearchDataTypes, i
         } else if (column === CONST.SEARCH.TABLE_COLUMNS.ACTION) {
             minWidth += (isActionColumnWide ?? type === CONST.SEARCH.DATA_TYPES.TASK) ? 80 : 68;
         } else if (column === CONST.SEARCH.TABLE_COLUMNS.DATE) {
-            minWidth += 48;
+            minWidth += isDateColumnCreated ? 72 : 48;
         } else if (
             column === CONST.SEARCH.TABLE_COLUMNS.SUBMITTED ||
             column === CONST.SEARCH.TABLE_COLUMNS.APPROVED ||

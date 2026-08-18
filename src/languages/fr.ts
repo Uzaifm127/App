@@ -8988,6 +8988,7 @@ Ajoutez davantage de règles de dépenses pour protéger la trésorerie de l’e
         screenShareRequest: 'Expensify vous invite à un partage d’écran',
     },
     search: {
+        created: 'Créé',
         resultsAreLimited: 'Les résultats de recherche sont limités.',
         viewResults: 'Afficher les résultats',
         applyFilters: 'Appliquer des filtres',
@@ -9079,6 +9080,7 @@ Ajoutez davantage de règles de dépenses pour protéger la trésorerie de l’e
         },
         filtersHeader: 'Filtres',
         filters: {
+            createdDate: 'Date de création',
             date: {
                 before: (date?: string) => `Avant ${date ?? ''}`,
                 after: (date?: string) => `Après ${date ?? ''}`,

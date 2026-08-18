@@ -8786,6 +8786,7 @@ El plan Controlar empieza en 9 $ por miembro activo al mes.`,
         screenShareRequest: 'Expensify te está invitando a compartir la pantalla',
     },
     search: {
+        created: 'Creado',
         tabs: {
             expenseReports: 'Informes de gastos',
             reports: 'Informes',
@@ -8905,6 +8906,7 @@ El plan Controlar empieza en 9 $ por miembro activo al mes.`,
         },
         filtersHeader: 'Filtros',
         filters: {
+            createdDate: 'Fecha de creación',
             date: {
                 before: (date) => `Antes de ${date ?? ''}`,
                 after: (date) => `Después de ${date ?? ''}`,

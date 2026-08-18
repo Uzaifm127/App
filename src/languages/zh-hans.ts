@@ -8586,6 +8586,7 @@ ${reportName}`,
         screenShareRequest: 'Expensify 正在邀请你进行屏幕共享',
     },
     search: {
+        created: '已创建',
         resultsAreLimited: '搜索结果已受限制。',
         viewResults: '查看结果',
         applyFilters: '应用筛选条件',
@@ -8667,6 +8668,7 @@ ${reportName}`,
         },
         filtersHeader: '筛选器',
         filters: {
+            createdDate: '创建日期',
             date: {
                 before: (date?: string) => `在 ${date ?? ''} 之前`,
                 after: (date?: string) => `在 ${date ?? ''} 之后`,

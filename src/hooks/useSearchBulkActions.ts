@@ -910,7 +910,8 @@ function useSearchBulkActions({queryJSON}: UseSearchBulkActionsParams) {
 
             const exportColumnLabels: Partial<Record<SearchColumnType, string>> = {};
             for (const column of columnsToExport) {
-                exportColumnLabels[column] = translate(getSearchColumnTranslationKey(column));
+                const translationKey = isBasicExport && column === CONST.SEARCH.TABLE_COLUMNS.DATE ? 'common.date' : getSearchColumnTranslationKey(column);
+                exportColumnLabels[column] = translate(translationKey);
             }
 
             const jsonQuery = queryJSONToExport
