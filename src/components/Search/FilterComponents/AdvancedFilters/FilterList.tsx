@@ -18,6 +18,8 @@ import type {SearchFilter} from '@libs/SearchUIUtils';
 
 import variables from '@styles/variables';
 
+import CONST from '@src/CONST';
+import type {TranslationPaths} from '@src/languages/types';
 import type {SearchDataTypes} from '@src/types/onyx/SearchResults';
 
 import type {StyleProp, ViewStyle} from 'react-native';
@@ -45,6 +47,10 @@ type FilterItemProps = FilterItemCallbacks & {
     isSelected?: boolean;
 };
 
+function getFilterAccessibilityLabel(filterKey: SearchFilter['key'], labelKey: TranslationPaths, translate: (key: TranslationPaths) => string) {
+    return filterKey === CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE ? translate(labelKey) : filterKey;
+}
+
 function FilterItem({filterKey, isSelected, onPress, onHoverIn, onFocus}: FilterItemProps) {
     const {translate} = useLocalize();
     const styles = useThemeStyles();
@@ -70,7 +76,7 @@ function FilterItem({filterKey, isSelected, onPress, onHoverIn, onFocus}: Filter
         <PressableWithFeedback
             style={({pressed}) => [styles.typeFilterMenu, getPressableBackgroundStyle(pressed)]}
             accessible
-            accessibilityLabel={filterKey}
+            accessibilityLabel={getFilterAccessibilityLabel(filterKey, labelKey, translate)}
             onHoverIn={() => onHoverIn?.(filterKey)}
             onFocus={() => onFocus?.(filterKey)}
             onPress={() => onPress?.(filterKey)}
@@ -136,4 +142,5 @@ function FilterList({type, policyID, selectedFilter, style, contentContainerStyl
     );
 }
 
+export {getFilterAccessibilityLabel};
 export default FilterList;

@@ -115,6 +115,7 @@ function ReportDetailsColumnsPage() {
             defaultSelectedColumns={REPORT_DETAILS_DEFAULT_COLUMNS}
             currentColumns={effectiveColumns}
             requiredColumns={requiredColumns}
+            dateColumnTranslationKey="common.date"
             onSave={handleSave}
         />
     );

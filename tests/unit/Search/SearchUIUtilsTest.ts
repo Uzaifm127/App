@@ -11454,6 +11454,11 @@ describe('SearchUIUtils', () => {
             expect(translationKey).toBe('search.created');
         });
 
+        it('should allow the report details columns list to keep the DATE column label as Date', () => {
+            const translationKey = SearchUIUtils.getSearchColumnTranslationKey(CONST.SEARCH.TABLE_COLUMNS.DATE, 'common.date');
+            expect(translationKey).toBe('common.date');
+        });
+
         it('should return correct translation key for GROUP_CATEGORY', () => {
             const translationKey = SearchUIUtils.getSearchColumnTranslationKey(CONST.SEARCH.TABLE_COLUMNS.GROUP_CATEGORY);
             expect(translationKey).toBe('common.category');

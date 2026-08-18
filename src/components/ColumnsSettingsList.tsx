@@ -6,6 +6,9 @@ import useThemeStyles from '@hooks/useThemeStyles';
 
 import {getSearchColumnTranslationKey} from '@libs/SearchUIUtils';
 
+import CONST from '@src/CONST';
+import type {TranslationPaths} from '@src/languages/types';
+
 import React, {useRef, useState} from 'react';
 import {View} from 'react-native';
 
@@ -67,11 +70,24 @@ type ColumnsSettingsListProps = {
     /** The default columns for the active group-by mode when no customization has been applied */
     defaultGroupColumns?: SearchCustomColumnIds[];
 
+    /** Optional translation key for the Date column */
+    dateColumnTranslationKey?: TranslationPaths;
+
     /** Callback fired with the updated column list when the user saves changes */
     onSave: (columns: SearchCustomColumnIds[]) => void;
 };
 
-function ColumnsSettingsList({allColumns, defaultSelectedColumns, currentColumns, requiredColumns, groupBy, groupColumns = [], defaultGroupColumns = [], onSave}: ColumnsSettingsListProps) {
+function ColumnsSettingsList({
+    allColumns,
+    defaultSelectedColumns,
+    currentColumns,
+    requiredColumns,
+    groupBy,
+    groupColumns = [],
+    defaultGroupColumns = [],
+    dateColumnTranslationKey,
+    onSave,
+}: ColumnsSettingsListProps) {
     const theme = useTheme();
     const styles = useThemeStyles();
     const icons = useMemoizedLazyExpensifyIcons(['DragHandles']);
@@ -87,8 +103,8 @@ function ColumnsSettingsList({allColumns, defaultSelectedColumns, currentColumns
         const unselected = columnsToSort
             .filter((col) => !col.isSelected)
             .sort((a, b) => {
-                const textA = translate(getSearchColumnTranslationKey(a.value));
-                const textB = translate(getSearchColumnTranslationKey(b.value));
+                const textA = translate(getSearchColumnTranslationKey(a.value, a.value === CONST.SEARCH.TABLE_COLUMNS.DATE ? dateColumnTranslationKey : undefined));
+                const textB = translate(getSearchColumnTranslationKey(b.value, b.value === CONST.SEARCH.TABLE_COLUMNS.DATE ? dateColumnTranslationKey : undefined));
                 return localeCompare(textA, textB);
             });
         return [...selected, ...unselected];
@@ -120,7 +136,7 @@ function ColumnsSettingsList({allColumns, defaultSelectedColumns, currentColumns
             const isEffectivelySelected = isRequired || isSelected;
             const isDragDisabled = !isEffectivelySelected;
             return {
-                text: translate(getSearchColumnTranslationKey(columnId)),
+                text: translate(getSearchColumnTranslationKey(columnId, columnId === CONST.SEARCH.TABLE_COLUMNS.DATE ? dateColumnTranslationKey : undefined)),
                 value: columnId,
                 keyForList: columnId,
                 isSelected: isEffectivelySelected,

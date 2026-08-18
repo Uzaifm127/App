@@ -4565,12 +4565,12 @@ function getCustomColumnDefault(value?: SearchDataTypes | SearchGroupBy): Search
     }
 }
 
-function getSearchColumnTranslationKey(column: SearchSortBy): TranslationPaths {
+function getSearchColumnTranslationKey(column: SearchSortBy, dateTranslationKey?: TranslationPaths): TranslationPaths {
     switch (column) {
         case CONST.SEARCH.TABLE_COLUMNS.AVATAR:
             return 'common.avatar';
         case CONST.SEARCH.TABLE_COLUMNS.DATE:
-            return 'search.created';
+            return dateTranslationKey ?? 'search.created';
         case CONST.SEARCH.TABLE_COLUMNS.SUBMITTED:
             return 'common.submitted';
         case CONST.SEARCH.TABLE_COLUMNS.APPROVED:
