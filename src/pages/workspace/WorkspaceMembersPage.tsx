@@ -69,7 +69,7 @@ import {
     isSubmitPolicy,
     shouldFilterExpensifyTeam,
 } from '@libs/PolicyUtils';
-import {getDisplayNameForParticipant} from '@libs/ReportUtils';
+import {getDisplayNameForParticipant, hasOutstandingReportsToApprove} from '@libs/ReportUtils';
 import {convertPolicyEmployeesToApprovalWorkflows, updateWorkflowDataOnApproverRemoval} from '@libs/WorkflowUtils';
 
 import {close} from '@userActions/Modal';
@@ -141,6 +141,7 @@ function WorkspaceMembersPage({personalDetails, route, policy}: WorkspaceMembers
     const [session] = useOnyx(ONYXKEYS.SESSION);
     const isFocused = useIsFocused();
     const policyID = route.params.policyID;
+    const [allReports] = useOnyx(ONYXKEYS.COLLECTION.REPORT);
     const [connectionSyncProgress] = useOnyx(`${ONYXKEYS.COLLECTION.POLICY_CONNECTION_SYNC_PROGRESS}${policyID}`);
     const [invitedEmailsToAccountIDsDraft] = useOnyx(`${ONYXKEYS.COLLECTION.WORKSPACE_INVITE_MEMBERS_DRAFT}${policyID}`);
 
@@ -160,6 +161,15 @@ function WorkspaceMembersPage({personalDetails, route, policy}: WorkspaceMembers
     );
 
     const canSelectMultiple = canWriteMembers && (shouldUseNarrowLayout ? isMobileSelectionModeEnabled : true);
+
+    const memberWithOutstandingReports = selectedEmployees.find((email) => hasOutstandingReportsToApprove(allReports, policyID, policyMemberEmailsToAccountIDs[email]));
+
+    const pendingApprovalPrompt = memberWithOutstandingReports
+        ? translate(
+              'workspace.people.removeMemberPromptPendingApproval',
+              getDisplayNameForParticipant({accountID: policyMemberEmailsToAccountIDs[memberWithOutstandingReports], formatPhoneNumber, translate}),
+          )
+        : '';
 
     const confirmModalPrompt = useMemo(() => {
         const approverEmail = selectedEmployees.find((selectedEmployee) => isPolicyApprover(policy, selectedEmployee));
@@ -275,6 +285,17 @@ function WorkspaceMembersPage({personalDetails, route, policy}: WorkspaceMembers
             return;
         }
 
+        if (memberWithOutstandingReports) {
+            showConfirmModal({
+                shouldShowCancelButton: false,
+                success: true,
+                title: translate('workspace.people.removeMembersTitle', {count: selectedEmployees.length}),
+                prompt: pendingApprovalPrompt,
+                confirmText: translate('common.buttonConfirm'),
+            });
+            return;
+        }
+
         showConfirmModal({
             danger: true,
             title: translate('workspace.people.removeMembersTitle', {count: selectedEmployees.length}),
@@ -294,7 +315,19 @@ function WorkspaceMembersPage({personalDetails, route, policy}: WorkspaceMembers
 
             removeUsers();
         });
-    }, [confirmModalPrompt, removeUsers, selectedEmployees, policyMemberEmailsToAccountIDs, policy, policyID, showConfirmModal, showRuleBotGuardModal, translate]);
+    }, [
+        confirmModalPrompt,
+        memberWithOutstandingReports,
+        pendingApprovalPrompt,
+        removeUsers,
+        selectedEmployees,
+        policyMemberEmailsToAccountIDs,
+        policy,
+        policyID,
+        showConfirmModal,
+        showRuleBotGuardModal,
+        translate,
+    ]);
 
     /** Opens the member details page */
     const openMemberDetails = useCallback(

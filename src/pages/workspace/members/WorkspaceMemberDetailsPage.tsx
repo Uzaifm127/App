@@ -43,6 +43,7 @@ import {
     isPolicyApprover,
     tryNavigateToSubmitWorkspaceUpgrade,
 } from '@libs/PolicyUtils';
+import {hasOutstandingReportsToApprove} from '@libs/ReportUtils';
 import shouldRenderTransferOwnerButton from '@libs/shouldRenderTransferOwnerButton';
 import {generateAccountID} from '@libs/UserUtils';
 import {convertPolicyEmployeesToApprovalWorkflows, updateWorkflowDataOnApproverRemoval} from '@libs/WorkflowUtils';
@@ -119,6 +120,7 @@ function WorkspaceMemberDetailsPage({personalDetails, policy, route}: WorkspaceM
     const [cardList] = useOnyx(`${ONYXKEYS.COLLECTION.WORKSPACE_CARDS_LIST}`);
     const [customCardNames] = useOnyx(ONYXKEYS.NVP_EXPENSIFY_COMPANY_CARDS_CUSTOM_NAMES);
     const [fundList] = useOnyx(ONYXKEYS.FUND_LIST);
+    const [allReports] = useOnyx(ONYXKEYS.COLLECTION.REPORT);
     const expensifyCardSettings = useExpensifyCardFeeds(policyID);
     const {showConfirmModal} = useConfirmModal();
     const showRuleBotGuardModal = useRuleBotGuardModal();
@@ -147,6 +149,7 @@ function WorkspaceMemberDetailsPage({personalDetails, policy, route}: WorkspaceM
     const phoneNumber = getPhoneNumber(details);
     const reimburserEmail = getReimburserEmail(policy);
     const isReimburser = !!reimburserEmail && reimburserEmail === memberLogin;
+    const hasReportsToApprove = hasOutstandingReportsToApprove(allReports, policyID, accountID);
     const {isAccountLocked} = useLockedAccountState();
     const {showLockedAccountModal} = useLockedAccountActions();
 
@@ -277,6 +280,16 @@ function WorkspaceMemberDetailsPage({personalDetails, policy, route}: WorkspaceM
                 prompt: confirmModalPrompt,
                 confirmText: translate('common.buttonConfirm'),
                 cancelText: translate('common.cancel'),
+            });
+            return;
+        }
+        if (hasReportsToApprove) {
+            showConfirmModal({
+                shouldShowCancelButton: false,
+                success: true,
+                title: translate('workspace.people.removeMemberTitle'),
+                prompt: translate('workspace.people.removeMemberPromptPendingApproval', displayName),
+                confirmText: translate('common.buttonConfirm'),
             });
             return;
         }

@@ -2022,6 +2022,17 @@ function isProcessingReport(report: OnyxEntry<Report>): boolean {
     return report?.stateNum === CONST.REPORT.STATE_NUM.SUBMITTED && report?.statusNum === CONST.REPORT.STATUS_NUM.SUBMITTED;
 }
 
+/**
+ * Returns true when a member is responsible for approving at least one submitted expense report in a workspace.
+ */
+function hasOutstandingReportsToApprove(reports: OnyxCollection<Report> | undefined, policyID: string | undefined, memberAccountID: number | undefined): boolean {
+    if (!policyID || memberAccountID === undefined) {
+        return false;
+    }
+
+    return Object.values(reports ?? {}).some((report) => isExpenseReport(report) && isProcessingReport(report) && report?.policyID === policyID && report?.managerID === memberAccountID);
+}
+
 function isOpenReport(report: OnyxEntry<Report>): boolean {
     return report?.stateNum === CONST.REPORT.STATE_NUM.OPEN && report?.statusNum === CONST.REPORT.STATUS_NUM.OPEN;
 }
@@ -14302,6 +14313,7 @@ export {
     getActionErrorsByTransaction,
     hasActionWithErrorsForTransaction,
     hasReportBeenForwardedSinceLastSubmit,
+    hasOutstandingReportsToApprove,
     hasAutomatedExpensifyAccountIDs,
     hasEmptyReportsForPolicy,
     hasHeldExpenses,
