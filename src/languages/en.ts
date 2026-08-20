@@ -9064,7 +9064,6 @@ const translations = {
         screenShareRequest: 'Expensify is inviting you to a screen share',
     },
     search: {
-        created: 'Created',
         tabs: {
             expenseReports: 'Expense reports',
             reports: 'Reports',
@@ -9180,6 +9179,7 @@ const translations = {
         },
         filtersHeader: 'Filters',
         filters: {
+            created: 'Created',
             createdDate: 'Created date',
             date: {
                 before: (date?: string) => `Before ${date ?? ''}`,

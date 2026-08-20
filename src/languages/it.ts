@@ -8925,7 +8925,6 @@ Aggiungi altre regole di spesa per proteggere il flusso di cassa aziendale.`,
         screenShareRequest: 'Expensify ti sta invitando a una condivisione dello schermo',
     },
     search: {
-        created: 'Creato',
         resultsAreLimited: 'I risultati di ricerca sono limitati.',
         viewResults: 'Visualizza risultati',
         applyFilters: 'Applica i filtri',
@@ -9017,6 +9016,7 @@ Aggiungi altre regole di spesa per proteggere il flusso di cassa aziendale.`,
         },
         filtersHeader: 'Filtri',
         filters: {
+            created: 'Creato',
             createdDate: 'Data di creazione',
             date: {
                 before: (date?: string) => `Prima di ${date ?? ''}`,

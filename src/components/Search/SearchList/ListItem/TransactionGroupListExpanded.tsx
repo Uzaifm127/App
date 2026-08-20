@@ -303,7 +303,7 @@ function TransactionGroupListExpandedImpl({
     };
 
     const dataColumns = currentColumns.filter((column) => !column.startsWith(CONST.SEARCH.GROUP_COLUMN_PREFIX)) ?? [];
-    const minTableWidth = getTableMinWidth(dataColumns, CONST.SEARCH.DATA_TYPES.EXPENSE, isActionColumnWide, true);
+    const minTableWidth = getTableMinWidth(dataColumns, CONST.SEARCH.DATA_TYPES.EXPENSE, isActionColumnWide);
     const shouldScrollHorizontally = isLargeScreenWidth && minTableWidth > windowWidth;
 
     const content = (
@@ -369,7 +369,6 @@ function TransactionGroupListExpandedImpl({
                                     taxAmountColumnSize={taxAmountColumnSize}
                                     shouldShowTooltip={showTooltip}
                                     shouldUseNarrowLayout={!isLargeScreenWidth}
-                                    isDateColumnCreated
                                     shouldShowCheckbox={!!canSelectMultiple}
                                     checkboxSentryLabel={CONST.SENTRY_LABEL.SEARCH.EXPANDED_TRANSACTION_ROW_CHECKBOX}
                                     onCheckboxPress={() => onSelectionButtonPress?.(transaction as ListItem)}

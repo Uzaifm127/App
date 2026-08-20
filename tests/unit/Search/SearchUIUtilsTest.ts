@@ -15,7 +15,7 @@ import type {
     TransactionWithdrawalIDGroupListItemType,
     TransactionYearGroupListItemType,
 } from '@components/Search/SearchList/ListItem/types';
-import {getExpenseHeaders} from '@components/Search/SearchTableHeader';
+import {getExpenseHeaders, getExpenseReportHeaders} from '@components/Search/SearchTableHeader';
 import type {SearchColumnType, SelectedTransactionInfo, SortOrder} from '@components/Search/types';
 
 import Navigation from '@navigation/Navigation';
@@ -11449,13 +11449,18 @@ describe('SearchUIUtils', () => {
     });
 
     describe('Test getSearchColumnTranslationKey', () => {
-        it('should return Created for the DATE column', () => {
-            const translationKey = SearchUIUtils.getSearchColumnTranslationKey(CONST.SEARCH.TABLE_COLUMNS.DATE);
-            expect(translationKey).toBe('search.created');
+        it('should return Created for the Expense Report DATE column', () => {
+            const translationKey = SearchUIUtils.getSearchColumnTranslationKey(CONST.SEARCH.TABLE_COLUMNS.DATE, CONST.SEARCH.DATA_TYPES.EXPENSE_REPORT);
+            expect(translationKey).toBe('search.filters.created');
         });
 
-        it('should allow the report details columns list to keep the DATE column label as Date', () => {
-            const translationKey = SearchUIUtils.getSearchColumnTranslationKey(CONST.SEARCH.TABLE_COLUMNS.DATE, 'common.date');
+        it('should return Date for the Expense DATE column', () => {
+            const translationKey = SearchUIUtils.getSearchColumnTranslationKey(CONST.SEARCH.TABLE_COLUMNS.DATE, CONST.SEARCH.DATA_TYPES.EXPENSE);
+            expect(translationKey).toBe('common.date');
+        });
+
+        it('should return Date when the Search type is not provided', () => {
+            const translationKey = SearchUIUtils.getSearchColumnTranslationKey(CONST.SEARCH.TABLE_COLUMNS.DATE);
             expect(translationKey).toBe('common.date');
         });
 
@@ -11506,17 +11511,17 @@ describe('SearchUIUtils', () => {
     });
 
     describe('Search date column configuration', () => {
-        it('should use Created in Search and keep Date in the single-report table', () => {
-            const reportDateHeader = getExpenseHeaders().find(({columnName}) => columnName === CONST.SEARCH.TABLE_COLUMNS.DATE);
-            const searchDateHeader = getExpenseHeaders(undefined, true).find(({columnName}) => columnName === CONST.SEARCH.TABLE_COLUMNS.DATE);
+        it('should use Created for Expense Report Search and Date for expenses', () => {
+            const expenseDateHeader = getExpenseHeaders().find(({columnName}) => columnName === CONST.SEARCH.TABLE_COLUMNS.DATE);
+            const expenseReportDateHeader = getExpenseReportHeaders().find(({columnName}) => columnName === CONST.SEARCH.TABLE_COLUMNS.DATE);
 
-            expect(reportDateHeader?.translationKey).toBe('common.date');
-            expect(searchDateHeader?.translationKey).toBe('search.created');
+            expect(expenseDateHeader?.translationKey).toBe('common.date');
+            expect(expenseReportDateHeader?.translationKey).toBe('search.filters.created');
         });
 
-        it('should reserve the wider date column only for Search tables', () => {
-            expect(SearchUIUtils.getTableMinWidth([CONST.SEARCH.TABLE_COLUMNS.DATE])).toBe(72);
-            expect(SearchUIUtils.getTableMinWidth([CONST.SEARCH.TABLE_COLUMNS.DATE], undefined, undefined, true)).toBe(96);
+        it('should reserve the wider date column only for Expense Report Search', () => {
+            expect(SearchUIUtils.getTableMinWidth([CONST.SEARCH.TABLE_COLUMNS.DATE], CONST.SEARCH.DATA_TYPES.EXPENSE)).toBe(72);
+            expect(SearchUIUtils.getTableMinWidth([CONST.SEARCH.TABLE_COLUMNS.DATE], CONST.SEARCH.DATA_TYPES.EXPENSE_REPORT)).toBe(96);
         });
     });
 

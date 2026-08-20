@@ -8891,7 +8891,6 @@ Adicione mais regras de gasto para proteger o fluxo de caixa da empresa.`,
         screenShareRequest: 'A Expensify está convidando você para compartilhar a tela',
     },
     search: {
-        created: 'Criado',
         resultsAreLimited: 'Os resultados da pesquisa são limitados.',
         viewResults: 'Ver resultados',
         applyFilters: 'Aplicar filtros',
@@ -8983,6 +8982,7 @@ Adicione mais regras de gasto para proteger o fluxo de caixa da empresa.`,
         },
         filtersHeader: 'Filtros',
         filters: {
+            created: 'Criado',
             createdDate: 'Data de criação',
             date: {
                 before: (date?: string) => `Antes de ${date ?? ''}`,

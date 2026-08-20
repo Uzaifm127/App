@@ -9157,7 +9157,6 @@ ${reportName}`,
         screenShareRequest: 'Η Expensify σάς προσκαλεί σε κοινή χρήση οθόνης',
     },
     search: {
-        created: 'Δημιουργήθηκε',
         tabs: {
             expenseReports: 'Αναφορές εξόδων',
             reports: 'Αναφορές',
@@ -9267,6 +9266,7 @@ ${reportName}`,
         },
         filtersHeader: 'Φίλτρα',
         filters: {
+            created: 'Δημιουργήθηκε',
             createdDate: 'Ημερομηνία δημιουργίας',
             date: {
                 before: (date?: string) => `Πριν από ${date ?? ''}`,

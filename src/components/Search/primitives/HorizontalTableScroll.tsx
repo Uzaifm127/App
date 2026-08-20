@@ -44,7 +44,7 @@ type HorizontalTableScrollProps = {
 function HorizontalTableScroll({children, columns, type, isActionColumnWide, isHeaderVisible, dataKey}: HorizontalTableScrollProps) {
     const styles = useThemeStyles();
     const {windowWidth} = useWindowDimensions();
-    const minTableWidth = getTableMinWidth(columns, type, isActionColumnWide, true);
+    const minTableWidth = getTableMinWidth(columns, type, isActionColumnWide);
     const shouldScrollHorizontally = isHeaderVisible && minTableWidth > windowWidth;
 
     const horizontalScrollViewRef = useRef<RNScrollView>(null);

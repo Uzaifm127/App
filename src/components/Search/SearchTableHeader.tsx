@@ -30,7 +30,7 @@ type SearchHeaderIcons = {
     Bank?: IconAsset;
 };
 
-const getExpenseHeaders = (groupBy?: SearchGroupBy, isSearchTable = false): SearchColumnConfig[] => [
+const getExpenseHeaders = (groupBy?: SearchGroupBy): SearchColumnConfig[] => [
     {
         columnName: CONST.SEARCH.TABLE_COLUMNS.RECEIPT,
         translationKey: 'common.receipt',
@@ -43,7 +43,7 @@ const getExpenseHeaders = (groupBy?: SearchGroupBy, isSearchTable = false): Sear
     },
     {
         columnName: CONST.SEARCH.TABLE_COLUMNS.DATE,
-        translationKey: isSearchTable ? 'search.created' : 'common.date',
+        translationKey: 'common.date',
         canEdit: true,
     },
     {
@@ -203,7 +203,7 @@ const getExpenseHeaders = (groupBy?: SearchGroupBy, isSearchTable = false): Sear
 const taskHeaders: SearchColumnConfig[] = [
     {
         columnName: CONST.SEARCH.TABLE_COLUMNS.DATE,
-        translationKey: 'search.created',
+        translationKey: 'common.date',
     },
     {
         columnName: CONST.SEARCH.TABLE_COLUMNS.TITLE,
@@ -246,7 +246,7 @@ const getExpenseReportHeaders = (profileIcon?: IconAsset): SearchColumnConfig[] 
     },
     {
         columnName: CONST.SEARCH.TABLE_COLUMNS.DATE,
-        translationKey: 'search.created',
+        translationKey: 'search.filters.created',
     },
     {
         columnName: CONST.SEARCH.TABLE_COLUMNS.SUBMITTED,
@@ -499,11 +499,11 @@ function getSearchColumns(type: ValueOf<typeof CONST.SEARCH.DATA_TYPES>, icons: 
             if (!isExpenseReportView && groupBy) {
                 return getTransactionGroupHeaders(groupBy, icons);
             }
-            return getExpenseHeaders(groupBy, true);
+            return getExpenseHeaders(groupBy);
         case CONST.SEARCH.DATA_TYPES.INVOICE:
-            return getExpenseHeaders(groupBy, true);
+            return getExpenseHeaders(groupBy);
         case CONST.SEARCH.DATA_TYPES.TRIP:
-            return getExpenseHeaders(groupBy, true);
+            return getExpenseHeaders(groupBy);
         case CONST.SEARCH.DATA_TYPES.TASK:
             return taskHeaders;
         case CONST.SEARCH.DATA_TYPES.EXPENSE_REPORT:
@@ -618,7 +618,7 @@ function SearchTableHeader({
         <SortableTableHeader
             columns={orderedColumnConfig}
             shouldShowColumn={shouldShowColumn}
-            isDateColumnCreated
+            isDateColumnCreated={type === CONST.SEARCH.DATA_TYPES.EXPENSE_REPORT}
             dateColumnSize={shouldShowYear ? CONST.SEARCH.TABLE_COLUMN_SIZES.WIDE : CONST.SEARCH.TABLE_COLUMN_SIZES.NORMAL}
             submittedColumnSize={shouldShowYearSubmitted ? CONST.SEARCH.TABLE_COLUMN_SIZES.WIDE : CONST.SEARCH.TABLE_COLUMN_SIZES.NORMAL}
             approvedColumnSize={shouldShowYearApproved ? CONST.SEARCH.TABLE_COLUMN_SIZES.WIDE : CONST.SEARCH.TABLE_COLUMN_SIZES.NORMAL}
@@ -644,5 +644,5 @@ function SearchTableHeader({
     );
 }
 
-export {getExpenseHeaders};
+export {getExpenseHeaders, getExpenseReportHeaders};
 export default SearchTableHeader;

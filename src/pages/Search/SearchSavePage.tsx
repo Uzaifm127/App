@@ -113,6 +113,7 @@ function FilterValue({filterKey, value}: FilterValueWithKeyProps) {
 function getAppliedDisplays(searchAdvancedFiltersForm: Partial<SearchAdvancedFiltersForm>, queryJSON: SearchQueryJSON | undefined, translate: LocalizedTranslate) {
     const appliedDisplays = [];
     const groupBy = searchAdvancedFiltersForm.groupBy;
+    const queryType = queryJSON?.type ?? searchAdvancedFiltersForm.type ?? CONST.SEARCH.DATA_TYPES.EXPENSE;
     if (groupBy) {
         appliedDisplays.push({label: translate('search.display.groupBy'), value: translate(`search.filters.groupBy.${groupBy}`)});
     }
@@ -130,7 +131,7 @@ function getAppliedDisplays(searchAdvancedFiltersForm: Partial<SearchAdvancedFil
     }
 
     if (queryJSON?.sortBy) {
-        appliedDisplays.push({label: translate('search.display.sortBy'), value: translate(getSearchColumnTranslationKey(queryJSON.sortBy))});
+        appliedDisplays.push({label: translate('search.display.sortBy'), value: translate(getSearchColumnTranslationKey(queryJSON.sortBy, queryType))});
     }
 
     if (queryJSON?.sortOrder) {
@@ -138,13 +139,12 @@ function getAppliedDisplays(searchAdvancedFiltersForm: Partial<SearchAdvancedFil
     }
 
     if (searchAdvancedFiltersForm.columns?.length) {
-        const queryType = searchAdvancedFiltersForm?.type ?? CONST.SEARCH.DATA_TYPES.EXPENSE;
         const defaultCustomColumns = [...getCustomColumnDefault(groupBy), ...getCustomColumnDefault(queryType)];
         const columns = searchAdvancedFiltersForm.columns;
 
         const isDefaultState = columns.length === defaultCustomColumns.length && columns.every((col, index) => col === defaultCustomColumns.at(index));
         if (!isDefaultState) {
-            appliedDisplays.push({label: translate('search.columns'), value: columns.map((column) => translate(getSearchColumnTranslationKey(column))).join(', ')});
+            appliedDisplays.push({label: translate('search.columns'), value: columns.map((column) => translate(getSearchColumnTranslationKey(column, queryType))).join(', ')});
         }
     }
 

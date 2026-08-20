@@ -1991,7 +1991,7 @@ const createStyleUtils = (theme: ThemeColors, styles: ThemeStyles) => ({
                     ...getWidthStyle(isDateColumnWide ? variables.w102 : variables.w62),
                 };
                 if (isDateColumnCreated && !isDateColumnWide) {
-                    columnWidth = {...getWidthStyle(variables.w72)};
+                    columnWidth = {...getWidthStyle(variables.w80)};
                 }
                 break;
             case CONST.SEARCH.TABLE_COLUMNS.WITHDRAWN:

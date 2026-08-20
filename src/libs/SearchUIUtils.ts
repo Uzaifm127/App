@@ -4565,12 +4565,12 @@ function getCustomColumnDefault(value?: SearchDataTypes | SearchGroupBy): Search
     }
 }
 
-function getSearchColumnTranslationKey(column: SearchSortBy, dateTranslationKey?: TranslationPaths): TranslationPaths {
+function getSearchColumnTranslationKey(column: SearchSortBy, type?: SearchDataTypes): TranslationPaths {
     switch (column) {
         case CONST.SEARCH.TABLE_COLUMNS.AVATAR:
             return 'common.avatar';
         case CONST.SEARCH.TABLE_COLUMNS.DATE:
-            return dateTranslationKey ?? 'search.created';
+            return type === CONST.SEARCH.DATA_TYPES.EXPENSE_REPORT ? 'search.filters.created' : 'common.date';
         case CONST.SEARCH.TABLE_COLUMNS.SUBMITTED:
             return 'common.submitted';
         case CONST.SEARCH.TABLE_COLUMNS.APPROVED:
@@ -5131,11 +5131,11 @@ function getTypeOptions(translate: LocalizedTranslate, policies: OnyxCollection<
     return shouldHideInvoiceOption ? typeOptions.filter((typeOption) => typeOption.value !== CONST.SEARCH.DATA_TYPES.INVOICE) : typeOptions;
 }
 
-function getSortByOptions(columns: SearchColumnType[], translate: LocalizedTranslate) {
+function getSortByOptions(columns: SearchColumnType[], translate: LocalizedTranslate, type?: SearchDataTypes) {
     const sortableColumns: Array<SingleSelectItem<SearchSortBy>> = [];
     for (const column of columns) {
         if (isColumnSortable(column)) {
-            sortableColumns.push({text: translate(getSearchColumnTranslationKey(column)), value: getSortByForColumn(column)});
+            sortableColumns.push({text: translate(getSearchColumnTranslationKey(column, type)), value: getSortByForColumn(column)});
         }
     }
     return sortableColumns;
@@ -5544,7 +5544,7 @@ const FILTER_VIEW_MAP = {
         icon: 'Coins',
     },
     [CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE]: {
-        labelKey: 'search.filters.createdDate',
+        labelKey: 'common.date',
         icon: 'CalendarSolid',
     },
     [CONST.SEARCH.SYNTAX_FILTER_KEYS.APPROVED]: {
@@ -5576,6 +5576,14 @@ const FILTER_VIEW_MAP = {
         icon: 'Tag',
     },
 } satisfies Partial<Record<SyntaxFilterKey, FilterView>>;
+
+function getSearchFilterTranslationKey(filterKey: keyof typeof FILTER_VIEW_MAP, type?: SearchDataTypes): TranslationPaths {
+    if (filterKey === CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE && type === CONST.SEARCH.DATA_TYPES.EXPENSE_REPORT) {
+        return 'search.filters.createdDate';
+    }
+
+    return FILTER_VIEW_MAP[filterKey].labelKey;
+}
 
 function getDateDisplayValue(syntaxKey: SearchDateFilterKeys, form: Partial<SearchAdvancedFiltersForm>, translate: LocalizedTranslate, dateFnsLocale: DateFnsLocale | undefined): string {
     const key = getDateFilterKeys(syntaxKey);
@@ -5892,7 +5900,7 @@ function mapFiltersFormToLabelValueList(
             const displayValue = isAmountFilterKey(syntax)
                 ? getAmountDisplayValue(syntax, searchAdvancedFiltersForm, translate, convertToDisplayStringWithoutCurrency)
                 : getDateDisplayValue(syntax, searchAdvancedFiltersForm, translate, dateFnsLocale);
-            const label = FILTER_VIEW_MAP[syntax].labelKey;
+            const label = getSearchFilterTranslationKey(syntax, type);
 
             if (displayValue && label) {
                 addedGroups.add(syntax);
@@ -5922,7 +5930,7 @@ function mapFiltersFormToLabelValueList(
         }
 
         const baseKey = removeNegation(key);
-        const labelKey = FILTER_VIEW_MAP[baseKey].labelKey;
+        const labelKey = getSearchFilterTranslationKey(baseKey, type);
         const value = getDisplayValue(key, searchAdvancedFiltersForm, type, translate, localeCompare);
         const label = getLabelValue(key, labelKey, translate);
 
@@ -6657,7 +6665,7 @@ function getTransactionFromTransactionListItem(item: TransactionListItemType): O
     return transaction as OnyxTypes.Transaction;
 }
 
-function getTableMinWidth(columns: SearchColumnType[], type?: SearchDataTypes, isActionColumnWide?: boolean, isDateColumnCreated = false) {
+function getTableMinWidth(columns: SearchColumnType[], type?: SearchDataTypes, isActionColumnWide?: boolean) {
     // Starts at 24px to account for the checkbox width
     let minWidth = 24;
 
@@ -6673,7 +6681,7 @@ function getTableMinWidth(columns: SearchColumnType[], type?: SearchDataTypes, i
         } else if (column === CONST.SEARCH.TABLE_COLUMNS.ACTION) {
             minWidth += (isActionColumnWide ?? type === CONST.SEARCH.DATA_TYPES.TASK) ? 80 : 68;
         } else if (column === CONST.SEARCH.TABLE_COLUMNS.DATE) {
-            minWidth += isDateColumnCreated ? 72 : 48;
+            minWidth += type === CONST.SEARCH.DATA_TYPES.EXPENSE_REPORT ? 72 : 48;
         } else if (
             column === CONST.SEARCH.TABLE_COLUMNS.SUBMITTED ||
             column === CONST.SEARCH.TABLE_COLUMNS.APPROVED ||
@@ -6943,6 +6951,7 @@ export {
     getSettlementStatus,
     getSettlementStatusBadgeProps,
     getSearchColumnTranslationKey,
+    getSearchFilterTranslationKey,
     getTableMinWidth,
     getCustomColumns,
     getCustomColumnDefault,

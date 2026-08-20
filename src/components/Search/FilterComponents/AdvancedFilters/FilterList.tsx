@@ -13,7 +13,7 @@ import useTheme from '@hooks/useTheme';
 import useThemeStyles from '@hooks/useThemeStyles';
 
 import getButtonState from '@libs/getButtonState';
-import {FILTER_VIEW_MAP} from '@libs/SearchUIUtils';
+import {FILTER_VIEW_MAP, getSearchFilterTranslationKey} from '@libs/SearchUIUtils';
 import type {SearchFilter} from '@libs/SearchUIUtils';
 
 import variables from '@styles/variables';
@@ -44,6 +44,7 @@ type FilterListProps = FilterItemCallbacks & {
 
 type FilterItemProps = FilterItemCallbacks & {
     filterKey: SearchFilter['key'];
+    type: SearchDataTypes | undefined;
     isSelected?: boolean;
 };
 
@@ -51,13 +52,14 @@ function getFilterAccessibilityLabel(filterKey: SearchFilter['key'], labelKey: T
     return filterKey === CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE ? translate(labelKey) : filterKey;
 }
 
-function FilterItem({filterKey, isSelected, onPress, onHoverIn, onFocus}: FilterItemProps) {
+function FilterItem({filterKey, type, isSelected, onPress, onHoverIn, onFocus}: FilterItemProps) {
     const {translate} = useLocalize();
     const styles = useThemeStyles();
     const StyleUtils = useStyleUtils();
     const theme = useTheme();
 
-    const {labelKey, icon} = FILTER_VIEW_MAP[filterKey];
+    const {icon} = FILTER_VIEW_MAP[filterKey];
+    const labelKey = getSearchFilterTranslationKey(filterKey, type);
     const icons = useMemoizedLazyExpensifyIcons(['ArrowRight', icon]);
 
     const getPressableBackgroundStyle = (pressed: boolean) => {
@@ -130,6 +132,7 @@ function FilterList({type, policyID, selectedFilter, style, contentContainerStyl
                         <FilterItem
                             key={item}
                             filterKey={item}
+                            type={type}
                             isSelected={item === selectedFilter}
                             onHoverIn={onHoverIn}
                             onFocus={onFocus}

@@ -285,7 +285,6 @@ function SearchStaticList({
                         policy={item.policy}
                         shouldShowTooltip={false}
                         shouldUseNarrowLayout={false}
-                        isDateColumnCreated
                         isLargeScreenWidth
                         columns={columns}
                         isSelected={false}

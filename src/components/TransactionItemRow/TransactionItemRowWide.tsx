@@ -80,7 +80,6 @@ function TransactionItemRowWide({
     isSelected,
     shouldShowTooltip,
     dateColumnSize,
-    isDateColumnCreated,
     submittedColumnSize,
     approvedColumnSize,
     postedColumnSize,
@@ -222,7 +221,7 @@ function TransactionItemRowWide({
                 return (
                     <View
                         key={column}
-                        style={[StyleUtils.getReportTableColumnStyles(CONST.SEARCH.TABLE_COLUMNS.DATE, {isDateColumnWide, isDateColumnCreated}), styles.editableCellColumn]}
+                        style={[StyleUtils.getReportTableColumnStyles(CONST.SEARCH.TABLE_COLUMNS.DATE, {isDateColumnWide}), styles.editableCellColumn]}
                     >
                         <DateCell
                             canEdit={canEditDate}

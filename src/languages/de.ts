@@ -8952,7 +8952,6 @@ Fügen Sie weitere Ausgabelimits hinzu, um den Cashflow Ihres Unternehmens zu sc
         screenShareRequest: 'Expensify lädt dich zu einer Bildschirmfreigabe ein',
     },
     search: {
-        created: 'Erstellt',
         resultsAreLimited: 'Suchergebnisse sind begrenzt.',
         viewResults: 'Ergebnisse anzeigen',
         applyFilters: 'Filter anwenden',
@@ -9045,6 +9044,7 @@ Fügen Sie weitere Ausgabelimits hinzu, um den Cashflow Ihres Unternehmens zu sc
         },
         filtersHeader: 'Filter',
         filters: {
+            created: 'Erstellt',
             createdDate: 'Erstellungsdatum',
             date: {
                 before: (date?: string) => `Vor ${date ?? ''}`,

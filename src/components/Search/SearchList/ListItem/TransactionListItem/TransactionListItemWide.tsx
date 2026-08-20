@@ -188,7 +188,6 @@ function TransactionListItemWide<TItem extends ListItem>({
                         onButtonPress={handleActionButtonPress}
                         onCheckboxPress={() => onCheckboxPress?.(item)}
                         shouldUseNarrowLayout={false}
-                        isDateColumnCreated
                         shouldUseFullHeightEditableCellHoverTarget
                         shouldSkipDeferRBR
                         isLargeScreenWidth
