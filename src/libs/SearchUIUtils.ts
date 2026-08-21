@@ -4565,12 +4565,16 @@ function getCustomColumnDefault(value?: SearchDataTypes | SearchGroupBy): Search
     }
 }
 
+function shouldUseCreatedDateForSearchType(type?: SearchDataTypes): boolean {
+    return type === CONST.SEARCH.DATA_TYPES.EXPENSE_REPORT || type === CONST.SEARCH.DATA_TYPES.INVOICE;
+}
+
 function getSearchColumnTranslationKey(column: SearchSortBy, type?: SearchDataTypes): TranslationPaths {
     switch (column) {
         case CONST.SEARCH.TABLE_COLUMNS.AVATAR:
             return 'common.avatar';
         case CONST.SEARCH.TABLE_COLUMNS.DATE:
-            return type === CONST.SEARCH.DATA_TYPES.EXPENSE_REPORT ? 'search.filters.created' : 'common.date';
+            return shouldUseCreatedDateForSearchType(type) ? 'search.filters.created' : 'common.date';
         case CONST.SEARCH.TABLE_COLUMNS.SUBMITTED:
             return 'common.submitted';
         case CONST.SEARCH.TABLE_COLUMNS.APPROVED:
@@ -5578,7 +5582,7 @@ const FILTER_VIEW_MAP = {
 } satisfies Partial<Record<SyntaxFilterKey, FilterView>>;
 
 function getSearchFilterTranslationKey(filterKey: keyof typeof FILTER_VIEW_MAP, type?: SearchDataTypes): TranslationPaths {
-    if (filterKey === CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE && type === CONST.SEARCH.DATA_TYPES.EXPENSE_REPORT) {
+    if (filterKey === CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE && shouldUseCreatedDateForSearchType(type)) {
         return 'search.filters.createdDate';
     }
 
@@ -6681,7 +6685,7 @@ function getTableMinWidth(columns: SearchColumnType[], type?: SearchDataTypes, i
         } else if (column === CONST.SEARCH.TABLE_COLUMNS.ACTION) {
             minWidth += (isActionColumnWide ?? type === CONST.SEARCH.DATA_TYPES.TASK) ? 80 : 68;
         } else if (column === CONST.SEARCH.TABLE_COLUMNS.DATE) {
-            minWidth += type === CONST.SEARCH.DATA_TYPES.EXPENSE_REPORT ? 72 : 48;
+            minWidth += shouldUseCreatedDateForSearchType(type) ? 72 : 48;
         } else if (
             column === CONST.SEARCH.TABLE_COLUMNS.SUBMITTED ||
             column === CONST.SEARCH.TABLE_COLUMNS.APPROVED ||
@@ -6952,6 +6956,7 @@ export {
     getSettlementStatusBadgeProps,
     getSearchColumnTranslationKey,
     getSearchFilterTranslationKey,
+    shouldUseCreatedDateForSearchType,
     getTableMinWidth,
     getCustomColumns,
     getCustomColumnDefault,

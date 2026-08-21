@@ -38,6 +38,7 @@ type TransactionListItemSharedProps<TItem extends ListItem> = {
 
 type TransactionListItemWideProps<TItem extends ListItem> = TransactionListItemSharedProps<TItem> & {
     currentSearchHash?: number;
+    isDateColumnCreated?: boolean;
 };
 
 type TransactionListItemNarrowProps<TItem extends ListItem> = TransactionListItemSharedProps<TItem> & {

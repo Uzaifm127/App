@@ -11454,6 +11454,11 @@ describe('SearchUIUtils', () => {
             expect(translationKey).toBe('search.filters.created');
         });
 
+        it('should return Created for the Invoice DATE column', () => {
+            const translationKey = SearchUIUtils.getSearchColumnTranslationKey(CONST.SEARCH.TABLE_COLUMNS.DATE, CONST.SEARCH.DATA_TYPES.INVOICE);
+            expect(translationKey).toBe('search.filters.created');
+        });
+
         it('should return Date for the Expense DATE column', () => {
             const translationKey = SearchUIUtils.getSearchColumnTranslationKey(CONST.SEARCH.TABLE_COLUMNS.DATE, CONST.SEARCH.DATA_TYPES.EXPENSE);
             expect(translationKey).toBe('common.date');
@@ -11511,17 +11516,22 @@ describe('SearchUIUtils', () => {
     });
 
     describe('Search date column configuration', () => {
-        it('should use Created for Expense Report Search and Date for expenses', () => {
+        it('should use Created for Expense Report and Invoice Search and Date for expenses', () => {
             const expenseDateHeader = getExpenseHeaders().find(({columnName}) => columnName === CONST.SEARCH.TABLE_COLUMNS.DATE);
+            const invoiceDateHeader = getExpenseHeaders(undefined, 'search.filters.created').find(({columnName}) => columnName === CONST.SEARCH.TABLE_COLUMNS.DATE);
             const expenseReportDateHeader = getExpenseReportHeaders().find(({columnName}) => columnName === CONST.SEARCH.TABLE_COLUMNS.DATE);
 
             expect(expenseDateHeader?.translationKey).toBe('common.date');
+            expect(invoiceDateHeader?.translationKey).toBe('search.filters.created');
             expect(expenseReportDateHeader?.translationKey).toBe('search.filters.created');
         });
 
-        it('should reserve the wider date column only for Expense Report Search', () => {
+        it('should reserve the wider date column only for Expense Report and Invoice Search', () => {
             expect(SearchUIUtils.getTableMinWidth([CONST.SEARCH.TABLE_COLUMNS.DATE], CONST.SEARCH.DATA_TYPES.EXPENSE)).toBe(72);
             expect(SearchUIUtils.getTableMinWidth([CONST.SEARCH.TABLE_COLUMNS.DATE], CONST.SEARCH.DATA_TYPES.EXPENSE_REPORT)).toBe(96);
+            expect(SearchUIUtils.getTableMinWidth([CONST.SEARCH.TABLE_COLUMNS.DATE], CONST.SEARCH.DATA_TYPES.INVOICE)).toBe(96);
+            expect(SearchUIUtils.getTableMinWidth([CONST.SEARCH.TABLE_COLUMNS.DATE], CONST.SEARCH.DATA_TYPES.TRIP)).toBe(72);
+            expect(SearchUIUtils.getTableMinWidth([CONST.SEARCH.TABLE_COLUMNS.DATE], CONST.SEARCH.DATA_TYPES.TASK)).toBe(72);
         });
     });
 

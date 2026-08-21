@@ -50,6 +50,7 @@ function TransactionListItemWide<TItem extends ListItem>({
     isAttendeesEnabledForMovingPolicy,
     currentSearchHash,
     chatReport,
+    isDateColumnCreated,
 }: TransactionListItemWideProps<TItem>) {
     const styles = useThemeStyles();
     const theme = useTheme();
@@ -197,6 +198,7 @@ function TransactionListItemWide<TItem extends ListItem>({
                         isDisabled={!!isDisabled}
                         shouldDisableActionPointerEvents={shouldDisableActionPointerEvents}
                         dateColumnSize={dateColumnSize}
+                        isDateColumnCreated={isDateColumnCreated}
                         submittedColumnSize={submittedColumnSize}
                         approvedColumnSize={approvedColumnSize}
                         postedColumnSize={postedColumnSize}

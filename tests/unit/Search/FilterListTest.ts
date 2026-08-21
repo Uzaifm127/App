@@ -21,8 +21,18 @@ describe('FilterList', () => {
         expect(getFilterAccessibilityLabel(CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE, labelKey, translate)).toBe('Created date');
     });
 
+    it('uses Created date for the Invoice date filter accessibility label', () => {
+        const labelKey = getSearchFilterTranslationKey(CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE, CONST.SEARCH.DATA_TYPES.INVOICE);
+        expect(getFilterAccessibilityLabel(CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE, labelKey, translate)).toBe('Created date');
+    });
+
     it('uses Date for the Expense date filter accessibility label', () => {
         const labelKey = getSearchFilterTranslationKey(CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE, CONST.SEARCH.DATA_TYPES.EXPENSE);
+        expect(getFilterAccessibilityLabel(CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE, labelKey, translate)).toBe('Date');
+    });
+
+    it.each([CONST.SEARCH.DATA_TYPES.TRIP, CONST.SEARCH.DATA_TYPES.CHAT, CONST.SEARCH.DATA_TYPES.TASK])('uses Date for the %s date filter accessibility label', (type) => {
+        const labelKey = getSearchFilterTranslationKey(CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE, type);
         expect(getFilterAccessibilityLabel(CONST.SEARCH.SYNTAX_FILTER_KEYS.DATE, labelKey, translate)).toBe('Date');
     });
 

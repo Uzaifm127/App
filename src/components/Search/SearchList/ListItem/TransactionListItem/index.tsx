@@ -25,6 +25,7 @@ import {syncMissingAttendeesViolation} from '@libs/AttendeeUtils';
 import getNonEmptyStringOnyxID from '@libs/getNonEmptyStringOnyxID';
 import {isAttendeeTrackingEnabled} from '@libs/PolicyUtils';
 import {isInvoiceReport} from '@libs/ReportUtils';
+import {shouldUseCreatedDateForSearchType} from '@libs/SearchUIUtils';
 import {
     isDeletedTransaction as isDeletedTransactionUtil,
     isViolationDismissed,
@@ -94,7 +95,7 @@ function TransactionListItemInner<TItem extends ListItem>({
     const isDeletedTransaction = isDeletedTransactionUtil(transactionItem);
 
     const {isLargeScreenWidth} = useResponsiveLayout();
-    const {currentSearchHash, currentSearchKey} = useSearchQueryContext();
+    const {currentSearchHash, currentSearchKey, currentSearchQueryJSON} = useSearchQueryContext();
     const {currentSearchResults} = useSearchResultsContext();
     const snapshotData = currentSearchResults?.data;
     const snapshotReport = (currentSearchResults?.data?.[`${ONYXKEYS.COLLECTION.REPORT}${transactionItem.reportID}`] ?? {}) as Report;
@@ -287,6 +288,7 @@ function TransactionListItemInner<TItem extends ListItem>({
             {...sharedProps}
             isLastItem={isLastItem}
             currentSearchHash={currentSearchHash}
+            isDateColumnCreated={shouldUseCreatedDateForSearchType(currentSearchQueryJSON?.type)}
         />
     );
 }
