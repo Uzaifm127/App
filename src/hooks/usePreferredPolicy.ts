@@ -1,4 +1,5 @@
 import ONYXKEYS from '@src/ONYXKEYS';
+import isLoadingOnyxValue from '@src/types/utils/isLoadingOnyxValue';
 
 import {Str} from 'expensify-common';
 
@@ -13,15 +14,18 @@ type UsePreferredPolicyResult = {
 
     /** Whether the user is restricted from creating policies */
     isRestrictedPolicyCreation: boolean;
+
+    /** Whether the domain security-group values needed for this decision are still loading */
+    isLoadingSecurityGroup?: boolean;
 };
 
 /**
  * Hook to get the preferred policy settings from the user's domain security group
  */
 function usePreferredPolicy(): UsePreferredPolicyResult {
-    const [myDomainSecurityGroups] = useOnyx(ONYXKEYS.MY_DOMAIN_SECURITY_GROUPS);
-    const [securityGroups] = useOnyx(ONYXKEYS.COLLECTION.SECURITY_GROUP);
-    const [session] = useOnyx(ONYXKEYS.SESSION);
+    const [myDomainSecurityGroups, myDomainSecurityGroupsResult] = useOnyx(ONYXKEYS.MY_DOMAIN_SECURITY_GROUPS);
+    const [securityGroups, securityGroupsResult] = useOnyx(ONYXKEYS.COLLECTION.SECURITY_GROUP);
+    const [session, sessionResult] = useOnyx(ONYXKEYS.SESSION);
 
     // Get the user's domain from their email
     const userDomain = session?.email ? Str.extractEmailDomain(session.email) : undefined;
@@ -42,6 +46,7 @@ function usePreferredPolicy(): UsePreferredPolicyResult {
         isRestrictedToPreferredPolicy: isRestrictionEnabled && hasValidPolicyID,
         preferredPolicyID: restrictedPolicyID,
         isRestrictedPolicyCreation: securityGroup?.enableRestrictedPolicyCreation === true,
+        isLoadingSecurityGroup: isLoadingOnyxValue(myDomainSecurityGroupsResult, securityGroupsResult, sessionResult),
     };
 }
 
