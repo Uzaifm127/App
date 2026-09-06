@@ -43,7 +43,7 @@ const findEmojiByCode = (code: string): Emoji => Emojis.emojiCodeTableWithSkinTo
 const CODE_RANGE_TYPES = new Set(['code', 'pre']);
 
 function getCodeRanges(text: string): MarkdownRange[] {
-    return parseExpensiMark(text).filter((range) => CODE_RANGE_TYPES.has(range.type));
+    return parseExpensiMark(text, CONST.MAX_MARKUP_LENGTH).filter((range) => CODE_RANGE_TYPES.has(range.type));
 }
 
 function isPositionInsideCodeRanges(ranges: MarkdownRange[], position: number): boolean {
@@ -51,7 +51,7 @@ function isPositionInsideCodeRanges(ranges: MarkdownRange[], position: number): 
 }
 
 function isPositionInsideCodeBlock(text: string, position: number): boolean {
-    return isPositionInsideCodeRanges(parseExpensiMark(text), position);
+    return isPositionInsideCodeRanges(parseExpensiMark(text, CONST.MAX_MARKUP_LENGTH), position);
 }
 
 /**
@@ -462,7 +462,7 @@ function replaceEmojis(text: string, preferredSkinTone: OnyxEntry<number | strin
         return {text: revertEmojisInCodeBlocks(newText).text, emojis};
     }
 
-    const codeBlockRanges = parseExpensiMark(text);
+    const codeBlockRanges = parseExpensiMark(text, CONST.MAX_MARKUP_LENGTH);
     const replacements: Array<{position: number; shortcode: string; replacement: string; name: string}> = [];
     const shortcodeSearchPositions: Record<string, number> = {};
     const englishTrie = normalizedLocale !== CONST.LOCALES.DEFAULT ? getEmojiTrie(CONST.LOCALES.DEFAULT) : null;
